@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { useState } from "react"
 
 const courses = [
   {
@@ -43,12 +44,34 @@ const courses = [
 ]
 
 export function TraineeMyTrainings() {
+  const [launchingCourse, setLaunchingCourse] = useState<number | null>(null)
+
   const handleLaunchVR = (courseId: number, courseTitle: string) => {
-    console.log("[v0] Launching VR course via OpenXR:", courseId)
-    console.log("[v0] Checking device compatibility...")
-    alert(
-      `Launching "${courseTitle}" via OpenXR runtime.\n\nPlease ensure your VR headset is connected and OpenXR runtime is installed.`,
-    )
+    console.log("[v0] Trainee: Select VR training")
+    console.log("[v0] Course ID:", courseId)
+    setLaunchingCourse(courseId)
+
+    // Simulate OpenXR initialization sequence
+    setTimeout(() => {
+      console.log("[v0] System: Checking VR device compatibility")
+      setTimeout(() => {
+        console.log("[v0] System: Launching OpenXR runtime")
+        setTimeout(() => {
+          console.log("[v0] System: Loading course assets")
+          setTimeout(() => {
+            console.log("[v0] System: VR session started")
+            setLaunchingCourse(null)
+            alert(
+              `VR Training Launched: "${courseTitle}"\n\n` +
+                `✓ OpenXR runtime initialized\n` +
+                `✓ Course assets loaded\n` +
+                `✓ VR session active\n\n` +
+                `Put on your VR headset to begin training.`,
+            )
+          }, 1000)
+        }, 1000)
+      }, 1000)
+    }, 1000)
   }
 
   return (
@@ -92,7 +115,7 @@ export function TraineeMyTrainings() {
                     {course.difficulty}
                   </span>
                   <span className="px-3 py-1 rounded-full bg-muted text-muted-foreground text-xs font-medium">
-                    ⏱️ {course.timeLimit}
+                    {course.timeLimit}
                   </span>
                 </div>
 
@@ -107,9 +130,22 @@ export function TraineeMyTrainings() {
                   </div>
                 </div>
 
+                {launchingCourse === course.id && (
+                  <div className="bg-primary/10 border border-primary/30 rounded-md p-3">
+                    <div className="flex items-center gap-3">
+                      <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
+                      <div className="space-y-0.5">
+                        <p className="text-sm font-medium text-foreground">Initializing VR...</p>
+                        <p className="text-xs text-muted-foreground">Checking device and loading assets</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex gap-3 pt-2">
                   <Button
                     onClick={() => handleLaunchVR(course.id, course.title)}
+                    disabled={launchingCourse !== null}
                     className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground flex items-center justify-center gap-2"
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -126,7 +162,7 @@ export function TraineeMyTrainings() {
                         d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                       />
                     </svg>
-                    Launch VR Training
+                    {launchingCourse === course.id ? "Launching..." : "Launch VR Training"}
                   </Button>
                   <Button variant="outline" className="flex items-center gap-2 bg-transparent">
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

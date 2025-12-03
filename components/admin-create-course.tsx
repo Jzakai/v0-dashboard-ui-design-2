@@ -8,11 +8,6 @@ interface AdminCreateCourseProps {
   onPublish?: () => void
 }
 
-const validationErrors = [
-  "Missing Respiration check in MARCH sequence.",
-  "Tourniquet application time not specified for casualty #1.",
-]
-
 const scenarioData = {
   environment: "Urban street - post-engagement",
   skillCategory: "Hemorrhage Control",
@@ -32,17 +27,25 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
   const [skillCategory, setSkillCategory] = useState("Hemorrhage Control")
   const [skill, setSkill] = useState("Tourniquet Application")
   const [difficulty, setDifficulty] = useState("Medium")
+
   const [showChatbot, setShowChatbot] = useState(false)
   const [chatMessages, setChatMessages] = useState<Array<{ role: string; content: string }>>([])
   const [userInput, setUserInput] = useState("")
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [scenarioGenerated, setScenarioGenerated] = useState(false)
+  const [isEditMode, setIsEditMode] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [validationErrors, setValidationErrors] = useState<string[]>([])
 
   const handleGenerateScenario = () => {
+    console.log("[v0] Admin: Input scenario details")
     setShowChatbot(true)
+    setScenarioGenerated(false)
     setChatMessages([
       {
         role: "assistant",
         content:
-          "Hello! I'm your AI scenario generator. Please specify the skill category, skill, and difficulty level for your training scenario.",
+          "Hello! I'm your AI scenario generator powered by RAG Agent. Please describe the training scenario you'd like to create, including skill category, difficulty, and any specific requirements.",
       },
     ])
   }
@@ -50,30 +53,92 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
   const handleSendMessage = () => {
     if (!userInput.trim()) return
 
-    setChatMessages([
-      ...chatMessages,
-      { role: "user", content: userInput },
+    const userMessage = userInput
+    setUserInput("")
+    setIsGenerating(true)
+
+    console.log("[v0] RAG Agent: Processing input and retrieving context")
+    setChatMessages((prev) => [...prev, { role: "user", content: userMessage }])
+
+    // Simulate RAG Agent processing
+    setTimeout(() => {
+      console.log("[v0] LLM: Generating scenario based on context")
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content:
+            "Processing your request with RAG Agent... Retrieving TCCC guidelines and VR asset library... Generating scenario...",
+        },
+      ])
+
+      // Simulate LLM generation
+      setTimeout(() => {
+        console.log("[v0] System: Returning scenario JSON to Admin")
+        setChatMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content:
+              "Scenario generated successfully! I've created a combat medical scenario focusing on hemorrhage control in an urban environment. The scenario includes MARCH protocol validation and OpenXR compatibility checks. Review the JSON output below.",
+          },
+        ])
+        setScenarioGenerated(true)
+        setIsGenerating(false)
+
+        // Run validation
+        const errors = [
+          "Missing Respiration check in MARCH sequence.",
+          "Tourniquet application time not specified for casualty #1.",
+        ]
+        setValidationErrors(errors)
+        console.log("[v0] Validation errors found:", errors.length)
+      }, 2000)
+    }, 1500)
+  }
+
+  const handleEditScenario = () => {
+    console.log("[v0] Admin: Edit scenario request")
+    setIsEditMode(true)
+    setChatMessages((prev) => [
+      ...prev,
       {
         role: "assistant",
         content:
-          "Generating scenario based on your specifications... I've created a combat medical scenario focusing on hemorrhage control in an urban environment. The scenario includes validation checks for TCCC protocol compliance and OpenXR compatibility.",
+          "Edit mode activated. Please specify the changes you'd like to make to the scenario. I'll validate them against TCCC protocols.",
       },
     ])
-    setUserInput("")
   }
 
   const handleSavePublish = () => {
-    console.log("[v0] Publishing course with validation checks")
-    if (onPublish) {
-      onPublish()
+    if (validationErrors.length > 0) {
+      console.log("[v0] Cannot save: Validation errors present")
+      return
     }
+
+    console.log("[v0] Admin: Save scenario request")
+    setIsSaving(true)
+
+    // Simulate database save
+    setTimeout(() => {
+      console.log("[v0] System: Storing scenario in database")
+      setTimeout(() => {
+        console.log("[v0] System: Scenario saved successfully")
+        setIsSaving(false)
+        alert("✓ Scenario saved and published successfully!\n\nThe course is now available for assignment to trainees.")
+
+        if (onPublish) {
+          onPublish()
+        }
+      }, 1000)
+    }, 1500)
   }
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-foreground">Create Course</h1>
-        <p className="text-muted-foreground">AI-powered scenario generation with validation</p>
+        <p className="text-muted-foreground">AI-powered scenario generation with RAG Agent</p>
       </div>
 
       <div className="grid grid-cols-2 gap-6">
@@ -152,10 +217,20 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
               <Button
                 onClick={handleGenerateScenario}
                 className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
+                disabled={isGenerating}
               >
-                Generate Scenario
+                {isGenerating ? "Generating..." : "Generate Scenario"}
               </Button>
-              <Button variant="outline" className="flex-1 bg-transparent">
+              <Button
+                variant="outline"
+                className="flex-1 bg-transparent"
+                onClick={() => {
+                  setCourseName("")
+                  setDescription("")
+                  setShowChatbot(false)
+                  setScenarioGenerated(false)
+                }}
+              >
                 Clear Fields
               </Button>
             </div>
@@ -166,7 +241,7 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
         <Card>
           <CardHeader>
             <CardTitle>AI Scenario Generator</CardTitle>
-            <CardDescription>Powered by RAG Agent</CardDescription>
+            <CardDescription>Powered by RAG Agent + LLM</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {showChatbot ? (
@@ -187,6 +262,16 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
                         </div>
                       </div>
                     ))}
+                    {isGenerating && (
+                      <div className="flex justify-start">
+                        <div className="bg-background border border-border px-3 py-2 rounded-lg text-sm">
+                          <div className="flex items-center gap-2">
+                            <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
+                            <span className="text-muted-foreground">Processing...</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <div className="flex gap-2">
                     <input
@@ -195,59 +280,69 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
                       value={userInput}
                       onChange={(e) => setUserInput(e.target.value)}
                       onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-                      className="flex-1 px-4 py-2 rounded-md bg-input text-foreground placeholder:text-muted-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary"
+                      disabled={isGenerating}
+                      className="flex-1 px-4 py-2 rounded-md bg-input text-foreground placeholder:text-muted-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
                     />
-                    <Button onClick={handleSendMessage} size="sm">
+                    <Button onClick={handleSendMessage} size="sm" disabled={isGenerating}>
                       Send
                     </Button>
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">Generated Scenario (JSON)</label>
-                  <pre className="w-full px-4 py-2 rounded-md bg-muted text-foreground border border-border overflow-auto text-xs h-32">
-                    {JSON.stringify(scenarioData, null, 2)}
-                  </pre>
-                </div>
+                {scenarioGenerated && (
+                  <>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground">Generated Scenario (JSON)</label>
+                      <pre className="w-full px-4 py-2 rounded-md bg-muted text-foreground border border-border overflow-auto text-xs h-32">
+                        {JSON.stringify(scenarioData, null, 2)}
+                      </pre>
+                    </div>
 
-                <div className="space-y-2">
-                  <div className="bg-destructive/10 border border-destructive/30 rounded-md p-4 space-y-2">
-                    <label className="text-sm font-semibold text-destructive flex items-center gap-2">
-                      ⚠️ Validation Checks
-                    </label>
-                    <div className="space-y-1">
-                      <div className="text-xs text-foreground">✓ TCCC/MARCH protocol compliance</div>
-                      <div className="text-xs text-foreground">
-                        ✓ Asset count within limits ({scenarioData.assetCount})
-                      </div>
-                      <div className="text-xs text-foreground">
-                        ✓ FPS target achievable ({scenarioData.fpsTarget}fps)
+                    <div className="space-y-2">
+                      <div className="bg-destructive/10 border border-destructive/30 rounded-md p-4 space-y-2">
+                        <label className="text-sm font-semibold text-destructive flex items-center gap-2">
+                          Validation Checks
+                        </label>
+                        <div className="space-y-1">
+                          <div className="text-xs text-foreground">✓ TCCC/MARCH protocol compliance</div>
+                          <div className="text-xs text-foreground">
+                            ✓ Asset count within limits ({scenarioData.assetCount})
+                          </div>
+                          <div className="text-xs text-foreground">
+                            ✓ FPS target achievable ({scenarioData.fpsTarget}fps)
+                          </div>
+                        </div>
+                        {validationErrors.length > 0 && (
+                          <ul className="space-y-1 mt-2 pt-2 border-t border-destructive/20">
+                            {validationErrors.map((error, idx) => (
+                              <li key={idx} className="text-xs text-destructive/80">
+                                • {error}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
                       </div>
                     </div>
-                    {validationErrors.length > 0 && (
-                      <ul className="space-y-1 mt-2 pt-2 border-t border-destructive/20">
-                        {validationErrors.map((error, idx) => (
-                          <li key={idx} className="text-xs text-destructive/80">
-                            • {error}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                </div>
 
-                <div className="flex gap-3 pt-2">
-                  <Button variant="outline" className="flex-1 bg-transparent" onClick={() => setShowChatbot(true)}>
-                    Edit Scenario
-                  </Button>
-                  <Button
-                    onClick={handleSavePublish}
-                    className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
-                    disabled={validationErrors.length > 0}
-                  >
-                    Save & Publish
-                  </Button>
-                </div>
+                    <div className="flex gap-3 pt-2">
+                      <Button
+                        variant="outline"
+                        className="flex-1 bg-transparent"
+                        onClick={handleEditScenario}
+                        disabled={isSaving}
+                      >
+                        Edit Scenario
+                      </Button>
+                      <Button
+                        onClick={handleSavePublish}
+                        className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
+                        disabled={validationErrors.length > 0 || isSaving}
+                      >
+                        {isSaving ? "Saving..." : "Save & Publish"}
+                      </Button>
+                    </div>
+                  </>
+                )}
               </>
             ) : (
               <div className="flex items-center justify-center h-full py-16 text-center">
