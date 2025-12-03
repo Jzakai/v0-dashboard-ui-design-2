@@ -21,11 +21,17 @@ const scenarioData = {
   fpsTarget: 90,
 }
 
+const skillsByCategory: Record<string, string[]> = {
+  "Care Under Fire": ["Hemorrhage control", "Tourniquet application", "Tactical movement under fire"],
+  "Tactical Field Care": ["Airway opening", "Needle-D chest decompression", "Wound packing", "Pain control"],
+  "Tactical Evacuation": ["Litter carry", "Communication (MIST report)", "Triage decisions"],
+}
+
 export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
   const [courseName, setCourseName] = useState("")
   const [description, setDescription] = useState("")
-  const [skillCategory, setSkillCategory] = useState("Hemorrhage Control")
-  const [skill, setSkill] = useState("Tourniquet Application")
+  const [skillCategory, setSkillCategory] = useState("Care Under Fire")
+  const [skill, setSkill] = useState("Hemorrhage control")
   const [difficulty, setDifficulty] = useState("Medium")
 
   const [showChatbot, setShowChatbot] = useState(false)
@@ -36,6 +42,15 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
   const [isEditMode, setIsEditMode] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [validationErrors, setValidationErrors] = useState<string[]>([])
+
+  const handleSkillCategoryChange = (newCategory: string) => {
+    setSkillCategory(newCategory)
+    // Reset skill to the first option of the new category
+    const availableSkills = skillsByCategory[newCategory] || []
+    if (availableSkills.length > 0) {
+      setSkill(availableSkills[0])
+    }
+  }
 
   const handleGenerateScenario = () => {
     console.log("[v0] Admin: Input scenario details")
@@ -174,7 +189,7 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
               <label className="text-sm font-medium text-foreground">Skill Category</label>
               <select
                 value={skillCategory}
-                onChange={(e) => setSkillCategory(e.target.value)}
+                onChange={(e) => handleSkillCategoryChange(e.target.value)}
                 className="w-full px-4 py-2 rounded-md bg-input text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option>Care Under Fire</option>
@@ -190,11 +205,11 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
                 onChange={(e) => setSkill(e.target.value)}
                 className="w-full px-4 py-2 rounded-md bg-input text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary"
               >
-                <option>Tourniquet Application</option>
-                <option>Wound Packing</option>
-                <option>Pressure Dressing</option>
-                <option>Nasopharyngeal Airway</option>
-                <option>Chest Seal Application</option>
+                {skillsByCategory[skillCategory]?.map((skillOption) => (
+                  <option key={skillOption} value={skillOption}>
+                    {skillOption}
+                  </option>
+                ))}
               </select>
             </div>
 
