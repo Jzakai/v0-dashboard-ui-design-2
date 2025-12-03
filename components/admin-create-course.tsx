@@ -52,7 +52,7 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
     }
   }
 
-  const handleGenerateScenario = () => {
+  const handleGenerateScenario = async () => {
     console.log("[v0] Admin: Input scenario details")
     setShowChatbot(true)
     setScenarioGenerated(false)
@@ -63,6 +63,39 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
           "Hello! I'm your AI scenario generator powered by RAG Agent. Please describe the training scenario you'd like to create, including skill category, difficulty, and any specific requirements.",
       },
     ])
+
+    // Send POST request to backend
+    try {
+      const response = await fetch("/generate_scenario", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          courseName,
+          description,
+          skillCategory,
+          skill,
+          difficulty,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+      console.log("[v0] Backend response:", data)
+    } catch (error) {
+      console.error("[v0] Error generating scenario:", error)
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: "Error connecting to backend. Please ensure the server is running.",
+        },
+      ])
+    }
   }
 
   const handleSendMessage = () => {
@@ -125,7 +158,7 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
     ])
   }
 
-  const handleSavePublish = () => {
+  const handleSavePublish = async () => {
     if (validationErrors.length > 0) {
       console.log("[v0] Cannot save: Validation errors present")
       return
@@ -134,19 +167,42 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
     console.log("[v0] Admin: Save scenario request")
     setIsSaving(true)
 
-    // Simulate database save
-    setTimeout(() => {
-      console.log("[v0] System: Storing scenario in database")
-      setTimeout(() => {
-        console.log("[v0] System: Scenario saved successfully")
-        setIsSaving(false)
-        alert("✓ Scenario saved and published successfully!\n\nThe course is now available for assignment to trainees.")
+    // Send POST request to backend
+    try {
+      const response = await fetch("/save_scenario", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          courseName,
+          description,
+          skillCategory,
+          skill,
+          difficulty,
+          scenarioData,
+        }),
+      })
 
-        if (onPublish) {
-          onPublish()
-        }
-      }, 1000)
-    }, 1500)
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+      console.log("[v0] Backend response:", data)
+      console.log("[v0] System: Scenario saved successfully")
+
+      setIsSaving(false)
+      alert("✓ Scenario saved and published successfully!\n\nThe course is now available for assignment to trainees.")
+
+      if (onPublish) {
+        onPublish()
+      }
+    } catch (error) {
+      console.error("[v0] Error saving scenario:", error)
+      setIsSaving(false)
+      alert("Error saving scenario. Please check the console and ensure the backend is running.")
+    }
   }
 
   return (
