@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from backend.services.assignment_service import orchestrate_assignment
+from services.assignment_service import orchestrate_assignment
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/assignment")

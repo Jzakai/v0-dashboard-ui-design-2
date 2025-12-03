@@ -1,6 +1,8 @@
 from fastapi import APIRouter
-from backend.models.scenario_models import GenerateScenarioRequest, SaveScenarioRequest
-from backend.services.scenario_service import orchestrate_generate_scenario, orchestrate_save_scenario
+from models.scenario_models import GenerateScenarioRequest, SaveScenarioRequest
+from services.scenario_service import orchestrate_generate_scenario, orchestrate_save_scenario
+
+
 
 router = APIRouter(prefix="/scenario")
 

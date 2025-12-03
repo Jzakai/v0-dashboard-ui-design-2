@@ -1,3 +1,4 @@
+'''
 import os
 from textwrap import dedent
 
@@ -77,3 +78,4 @@ def modify_scenario_with_agent(existing_json, edits):
     # (Your real agent code goes here)
     # -----------------------------
     raise NotImplementedError("Real AI mode disabled in free testing mode")
+'''

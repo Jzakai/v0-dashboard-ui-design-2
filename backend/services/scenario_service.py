@@ -1,6 +1,7 @@
-from backend.agent.rag_agent import generate_scenario_from_agent, modify_scenario_with_agent
-from backend.repositories import scenario_repo
-from backend.utils.schema_validator import validate_scenario_schema
+
+from agent.rag_agent_openrouter import generate_scenario_from_agent, modify_scenario_with_agent
+from repositories import scenario_repo
+from utils.schema_validator import validate_scenario_schema
 
 def orchestrate_generate_scenario(req):
     scenario_json = generate_scenario_from_agent(
@@ -8,7 +9,7 @@ def orchestrate_generate_scenario(req):
     )
 
     validate_scenario_schema(scenario_json)
-
+    '''
     scenario_id = scenario_repo.save_scenario(
         scenario_json,
         req.skill,
@@ -18,8 +19,10 @@ def orchestrate_generate_scenario(req):
     
     )
 
+    '''
+
     return {
-        "scenario_id": scenario_id,
+        #"scenario_id": scenario_id,
         "scenario_json": scenario_json,
         "skill": req.skill,
         "skill_category": req.skill_category,
@@ -67,3 +70,4 @@ def orchestrate_edit_scenario(req):
     )
 
     return {"status": "Saved", "scenario_id": req.scenario_id}
+

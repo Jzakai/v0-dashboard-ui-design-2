@@ -13,14 +13,13 @@ import { ScenarioVisualization } from '@/components/scenario-visualization';
 import { TraineeMyTrainings } from '@/components/trainee-my-trainings';
 import { TraineeMyResults } from '@/components/trainee-my-results';
 
-type PageType 
-  | 'dashboard' 
-  | 'courses' 
-  | 'create-course' 
+type PageType =
+  | 'courses'
+  | 'create-course'
   | 'scenario-visualization'
-  | 'assign-courses' 
-  | 'analytics' 
-  | 'my-trainings' 
+  | 'assign-courses'
+  | 'analytics'
+  | 'my-trainings'
   | 'my-results';
 
 export default function Home() {

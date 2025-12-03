@@ -79,17 +79,18 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
     // Send POST request to backend
     try {
       setIsGenerating(true)
-      const response = await fetch("/generate_scenario", {
+      const response = await fetch("http://127.0.0.1:8000/scenario/generate_scenario", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          courseName,
-          skillCategory,
-          skill,
-          difficulty,
-        }),
+        skill_category: skillCategory,
+        skill: skill,
+        difficulty: difficulty,
+      }),
+
+        
       })
 
       if (!response.ok) {

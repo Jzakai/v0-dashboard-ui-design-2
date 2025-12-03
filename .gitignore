@@ -1,1 +1,9 @@
 .env
+node_modules
+# Next.js build output
+.next/
+# Python junk
+__pycache__/
+*.pyc
+
+

@@ -27,7 +27,7 @@ def get_embeddings():
 def load_knowledge_base():
     import lancedb
 
-    pdf_path = "backend/protocols/TCCC_guidelines.pdf"
+    pdf_path = "protocols/TCCC_guidelines.pdf"
     db_uri = "tmp/lancedb"
     table_name = "tccc_knowledge"
 

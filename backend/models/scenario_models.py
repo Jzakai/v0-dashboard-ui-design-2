@@ -15,7 +15,6 @@ class SaveScenarioRequest(BaseModel):
     difficulty: str
     version: int
     edits: Dict | None = None
-    course_name: str
 
 
 class EditScenarioRequest(BaseModel):

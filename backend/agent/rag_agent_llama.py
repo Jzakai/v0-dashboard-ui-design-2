@@ -1,3 +1,4 @@
+'''
 from textwrap import dedent
 import os
 from dotenv import load_dotenv
@@ -116,3 +117,4 @@ def generate_scenario_llama(skill_category: str, skill: str, difficulty: str):
     """
 
     return llm.invoke(final_prompt).content
+'''

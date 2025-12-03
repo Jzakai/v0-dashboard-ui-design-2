@@ -1,4 +1,4 @@
-
+'''
 from textwrap import dedent
 from agno.agent import Agent
 from agno.models.openai import OpenAIChat, OpenAIEmbeddings
@@ -106,3 +106,5 @@ def modify_scenario_with_agent(existing_json, edits):
     })
 
     return response.output
+
+'''

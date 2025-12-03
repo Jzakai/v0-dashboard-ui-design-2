@@ -1,4 +1,4 @@
-from backend.repositories import assignment_repo, scenario_repo, trainee_repo
+from repositories import assignment_repo, scenario_repo, trainee_repo
 
 def orchestrate_assignment(req):
     scenario = scenario_repo.get_scenario_by_id(req.scenario_id)
