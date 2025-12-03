@@ -3,22 +3,35 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Plus, Trash2, ChevronDown, ChevronUp } from "lucide-react"
 
 interface AdminCreateCourseProps {
   onPublish?: () => void
 }
 
-const scenarioData = {
-  environment: "Urban street - post-engagement",
-  skillCategory: "Hemorrhage Control",
-  difficulty: "Medium",
-  numberOfCasualties: 1,
-  injuryType: "Severe lower limb hemorrhage",
-  timeLimit: 300,
-  requiredActions: ["Massive Hemorrhage", "Airway", "Respiration", "Circulation", "Hypothermia"],
-  protocol: "MARCH",
-  assetCount: 12,
-  fpsTarget: 90,
+interface Casualty {
+  id: string
+  injury_type: string
+  severity: string
+  location: string
+}
+
+interface Inject {
+  time: number
+  event: string
+  description: string
+}
+
+interface GeneratedScenario {
+  environment: string
+  skill_category: string
+  skill: string
+  difficulty: string
+  casualties: Casualty[]
+  injects: Inject[]
+  objectives: string[]
+  expected_actions: string[]
+  evaluation_metrics: string[]
 }
 
 const skillsByCategory: Record<string, string[]> = {
@@ -39,13 +52,13 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
   const [userInput, setUserInput] = useState("")
   const [isGenerating, setIsGenerating] = useState(false)
   const [scenarioGenerated, setScenarioGenerated] = useState(false)
-  const [isEditMode, setIsEditMode] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
-  const [validationErrors, setValidationErrors] = useState<string[]>([])
+
+  const [generatedScenario, setGeneratedScenario] = useState<GeneratedScenario | null>(null)
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set())
 
   const handleSkillCategoryChange = (newCategory: string) => {
     setSkillCategory(newCategory)
-    // Reset skill to the first option of the new category
     const availableSkills = skillsByCategory[newCategory] || []
     if (availableSkills.length > 0) {
       setSkill(availableSkills[0])
@@ -60,12 +73,13 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
       {
         role: "assistant",
         content:
-          "Hello! I'm your AI scenario generator powered by RAG Agent. Please describe the training scenario you'd like to create, including skill category, difficulty, and any specific requirements.",
+          "Hello! I'm your AI scenario generator powered by RAG Agent. I'll generate a scenario based on your configuration. Please wait...",
       },
     ])
 
     // Send POST request to backend
     try {
+      setIsGenerating(true)
       const response = await fetch("/generate_scenario", {
         method: "POST",
         headers: {
@@ -86,88 +100,71 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
 
       const data = await response.json()
       console.log("[v0] Backend response:", data)
-    } catch (error) {
-      console.error("[v0] Error generating scenario:", error)
-      setChatMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: "Error connecting to backend. Please ensure the server is running.",
-        },
-      ])
-    }
-  }
 
-  const handleSendMessage = () => {
-    if (!userInput.trim()) return
+      const mockScenario: GeneratedScenario = {
+        environment: "Urban street - post-engagement zone with damaged vehicles",
+        skill_category: skillCategory,
+        skill: skill,
+        difficulty: difficulty,
+        casualties: [
+          {
+            id: "casualty_1",
+            injury_type: "Severe lower limb hemorrhage",
+            severity: "Critical",
+            location: "Left femoral artery",
+          },
+        ],
+        injects: [
+          { time: 30, event: "Enemy fire nearby", description: "Sporadic gunfire 200m east" },
+          { time: 90, event: "Casualty becomes unresponsive", description: "Check airway and breathing" },
+        ],
+        objectives: [
+          "Control massive hemorrhage within 60 seconds",
+          "Apply tourniquet correctly",
+          "Assess and manage airway",
+        ],
+        expected_actions: [
+          "Apply tourniquet high and tight",
+          "Mark time on tourniquet",
+          "Check distal pulse",
+          "Monitor casualty vitals",
+        ],
+        evaluation_metrics: [
+          "Time to hemorrhage control",
+          "Tourniquet placement accuracy",
+          "MARCH protocol adherence",
+          "Communication effectiveness",
+        ],
+      }
 
-    const userMessage = userInput
-    setUserInput("")
-    setIsGenerating(true)
-
-    console.log("[v0] RAG Agent: Processing input and retrieving context")
-    setChatMessages((prev) => [...prev, { role: "user", content: userMessage }])
-
-    // Simulate RAG Agent processing
-    setTimeout(() => {
-      console.log("[v0] LLM: Generating scenario based on context")
+      setGeneratedScenario(mockScenario)
+      setScenarioGenerated(true)
+      setIsGenerating(false)
       setChatMessages((prev) => [
         ...prev,
         {
           role: "assistant",
           content:
-            "Processing your request with RAG Agent... Retrieving TCCC guidelines and VR asset library... Generating scenario...",
+            "Scenario generated successfully! Review and edit the details below. You can modify any section by clicking on it.",
         },
       ])
-
-      // Simulate LLM generation
-      setTimeout(() => {
-        console.log("[v0] System: Returning scenario JSON to Admin")
-        setChatMessages((prev) => [
-          ...prev,
-          {
-            role: "assistant",
-            content:
-              "Scenario generated successfully! I've created a combat medical scenario focusing on hemorrhage control in an urban environment. The scenario includes MARCH protocol validation and OpenXR compatibility checks. Review the JSON output below.",
-          },
-        ])
-        setScenarioGenerated(true)
-        setIsGenerating(false)
-
-        // Run validation
-        const errors = [
-          "Missing Respiration check in MARCH sequence.",
-          "Tourniquet application time not specified for casualty #1.",
-        ]
-        setValidationErrors(errors)
-        console.log("[v0] Validation errors found:", errors.length)
-      }, 2000)
-    }, 1500)
-  }
-
-  const handleEditScenario = () => {
-    console.log("[v0] Admin: Edit scenario request")
-    setIsEditMode(true)
-    setChatMessages((prev) => [
-      ...prev,
-      {
-        role: "assistant",
-        content:
-          "Edit mode activated. Please specify the changes you'd like to make to the scenario. I'll validate them against TCCC protocols.",
-      },
-    ])
+    } catch (error) {
+      console.error("[v0] Error generating scenario:", error)
+      setIsGenerating(false)
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: "Error connecting to backend. Showing demo scenario for testing.",
+        },
+      ])
+    }
   }
 
   const handleSavePublish = async () => {
-    if (validationErrors.length > 0) {
-      console.log("[v0] Cannot save: Validation errors present")
-      return
-    }
-
     console.log("[v0] Admin: Save scenario request")
     setIsSaving(true)
 
-    // Send POST request to backend
     try {
       const response = await fetch("/save_scenario", {
         method: "POST",
@@ -180,7 +177,7 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
           skillCategory,
           skill,
           difficulty,
-          scenarioData,
+          scenario: generatedScenario,
         }),
       })
 
@@ -202,6 +199,98 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
       console.error("[v0] Error saving scenario:", error)
       setIsSaving(false)
       alert("Error saving scenario. Please check the console and ensure the backend is running.")
+    }
+  }
+
+  const toggleSection = (section: string) => {
+    setExpandedSections((prev) => {
+      const newSet = new Set(prev)
+      if (newSet.has(section)) {
+        newSet.delete(section)
+      } else {
+        newSet.add(section)
+      }
+      return newSet
+    })
+  }
+
+  const updateScenarioField = (field: keyof GeneratedScenario, value: any) => {
+    if (generatedScenario) {
+      setGeneratedScenario({ ...generatedScenario, [field]: value })
+    }
+  }
+
+  const addCasualty = () => {
+    if (generatedScenario) {
+      const newCasualty: Casualty = {
+        id: `casualty_${generatedScenario.casualties.length + 1}`,
+        injury_type: "New injury",
+        severity: "Moderate",
+        location: "Specify location",
+      }
+      updateScenarioField("casualties", [...generatedScenario.casualties, newCasualty])
+    }
+  }
+
+  const removeCasualty = (index: number) => {
+    if (generatedScenario) {
+      const updated = generatedScenario.casualties.filter((_, i) => i !== index)
+      updateScenarioField("casualties", updated)
+    }
+  }
+
+  const updateCasualty = (index: number, field: keyof Casualty, value: string) => {
+    if (generatedScenario) {
+      const updated = [...generatedScenario.casualties]
+      updated[index] = { ...updated[index], [field]: value }
+      updateScenarioField("casualties", updated)
+    }
+  }
+
+  const addInject = () => {
+    if (generatedScenario) {
+      const newInject: Inject = { time: 0, event: "New event", description: "Description" }
+      updateScenarioField("injects", [...generatedScenario.injects, newInject])
+    }
+  }
+
+  const removeInject = (index: number) => {
+    if (generatedScenario) {
+      const updated = generatedScenario.injects.filter((_, i) => i !== index)
+      updateScenarioField("injects", updated)
+    }
+  }
+
+  const updateInject = (index: number, field: keyof Inject, value: string | number) => {
+    if (generatedScenario) {
+      const updated = [...generatedScenario.injects]
+      updated[index] = { ...updated[index], [field]: value }
+      updateScenarioField("injects", updated)
+    }
+  }
+
+  const addArrayItem = (field: "objectives" | "expected_actions" | "evaluation_metrics") => {
+    if (generatedScenario) {
+      updateScenarioField(field, [...generatedScenario[field], "New item"])
+    }
+  }
+
+  const removeArrayItem = (field: "objectives" | "expected_actions" | "evaluation_metrics", index: number) => {
+    if (generatedScenario) {
+      const updated = generatedScenario[field].filter((_, i) => i !== index)
+      updateScenarioField(field, updated)
+    }
+  }
+
+  const updateArrayItem = (
+    field: "objectives" | "expected_actions" | "evaluation_metrics",
+    index: number,
+    value: string,
+  ) => {
+    if (generatedScenario) {
+      const updated = [...generatedScenario[field]]
+      updated[index] = value
+      updateScenarioField(field, updated)
     }
   }
 
@@ -298,6 +387,7 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
                   setDescription("")
                   setShowChatbot(false)
                   setScenarioGenerated(false)
+                  setGeneratedScenario(null)
                 }}
               >
                 Clear Fields
@@ -306,22 +396,21 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
           </CardContent>
         </Card>
 
-        {/* Right Column - AI Chatbot & Output */}
-        <Card>
-          <CardHeader>
-            <CardTitle>AI Scenario Generator</CardTitle>
-            <CardDescription>Powered by RAG Agent + LLM</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {showChatbot ? (
-              <>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground">Chat with AI</label>
-                  <div className="border border-border rounded-md bg-muted/50 p-4 h-48 overflow-y-auto space-y-3">
+        {/* Right Column - Scenario Editor */}
+        <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>AI Scenario Generator</CardTitle>
+              <CardDescription>Powered by RAG Agent + LLM</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {showChatbot ? (
+                <div className="space-y-3">
+                  <div className="border border-border rounded-md bg-muted/50 p-4 h-32 overflow-y-auto space-y-3">
                     {chatMessages.map((msg, idx) => (
                       <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                         <div
-                          className={`max-w-[80%] px-3 py-2 rounded-lg text-sm ${
+                          className={`max-w-[90%] px-3 py-2 rounded-lg text-sm ${
                             msg.role === "user"
                               ? "bg-primary text-primary-foreground"
                               : "bg-background border border-border text-foreground"
@@ -342,91 +431,342 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
                       </div>
                     )}
                   </div>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="Specify modifications or confirm..."
-                      value={userInput}
-                      onChange={(e) => setUserInput(e.target.value)}
-                      onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-                      disabled={isGenerating}
-                      className="flex-1 px-4 py-2 rounded-md bg-input text-foreground placeholder:text-muted-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
-                    />
-                    <Button onClick={handleSendMessage} size="sm" disabled={isGenerating}>
-                      Send
-                    </Button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center py-12 text-center">
+                  <div className="space-y-3">
+                    <div className="text-4xl">🤖</div>
+                    <p className="text-sm text-muted-foreground">
+                      Click "Generate Scenario" to start
+                      <br />
+                      creating your VR training course
+                    </p>
                   </div>
                 </div>
+              )}
+            </CardContent>
+          </Card>
 
-                {scenarioGenerated && (
-                  <>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-foreground">Generated Scenario (JSON)</label>
-                      <pre className="w-full px-4 py-2 rounded-md bg-muted text-foreground border border-border overflow-auto text-xs h-32">
-                        {JSON.stringify(scenarioData, null, 2)}
-                      </pre>
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="bg-destructive/10 border border-destructive/30 rounded-md p-4 space-y-2">
-                        <label className="text-sm font-semibold text-destructive flex items-center gap-2">
-                          Validation Checks
-                        </label>
+          {scenarioGenerated && generatedScenario && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Edit Scenario Details</CardTitle>
+                <CardDescription>Click on sections to modify scenario elements</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3 max-h-[600px] overflow-y-auto">
+                {/* Basic Info Section */}
+                <div className="border border-border rounded-md">
+                  <button
+                    onClick={() => toggleSection("basic")}
+                    className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
+                  >
+                    <span className="font-medium text-sm">Basic Information</span>
+                    {expandedSections.has("basic") ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                  </button>
+                  {expandedSections.has("basic") && (
+                    <div className="p-3 space-y-3 border-t border-border bg-muted/20">
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-muted-foreground">Environment</label>
+                        <input
+                          type="text"
+                          value={generatedScenario.environment}
+                          onChange={(e) => updateScenarioField("environment", e.target.value)}
+                          className="w-full px-3 py-1.5 text-sm rounded bg-background border border-border focus:outline-none focus:ring-2 focus:ring-primary"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
                         <div className="space-y-1">
-                          <div className="text-xs text-foreground">✓ TCCC/MARCH protocol compliance</div>
-                          <div className="text-xs text-foreground">
-                            ✓ Asset count within limits ({scenarioData.assetCount})
-                          </div>
-                          <div className="text-xs text-foreground">
-                            ✓ FPS target achievable ({scenarioData.fpsTarget}fps)
-                          </div>
+                          <label className="text-xs font-medium text-muted-foreground">Skill Category</label>
+                          <input
+                            type="text"
+                            value={generatedScenario.skill_category}
+                            onChange={(e) => updateScenarioField("skill_category", e.target.value)}
+                            className="w-full px-3 py-1.5 text-sm rounded bg-background border border-border focus:outline-none focus:ring-2 focus:ring-primary"
+                          />
                         </div>
-                        {validationErrors.length > 0 && (
-                          <ul className="space-y-1 mt-2 pt-2 border-t border-destructive/20">
-                            {validationErrors.map((error, idx) => (
-                              <li key={idx} className="text-xs text-destructive/80">
-                                • {error}
-                              </li>
-                            ))}
-                          </ul>
-                        )}
+                        <div className="space-y-1">
+                          <label className="text-xs font-medium text-muted-foreground">Difficulty</label>
+                          <select
+                            value={generatedScenario.difficulty}
+                            onChange={(e) => updateScenarioField("difficulty", e.target.value)}
+                            className="w-full px-3 py-1.5 text-sm rounded bg-background border border-border focus:outline-none focus:ring-2 focus:ring-primary"
+                          >
+                            <option>Easy</option>
+                            <option>Medium</option>
+                            <option>Hard</option>
+                          </select>
+                        </div>
                       </div>
                     </div>
+                  )}
+                </div>
 
-                    <div className="flex gap-3 pt-2">
-                      <Button
-                        variant="outline"
-                        className="flex-1 bg-transparent"
-                        onClick={handleEditScenario}
-                        disabled={isSaving}
-                      >
-                        Edit Scenario
-                      </Button>
-                      <Button
-                        onClick={handleSavePublish}
-                        className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
-                        disabled={validationErrors.length > 0 || isSaving}
-                      >
-                        {isSaving ? "Saving..." : "Save & Publish"}
+                {/* Casualties Section */}
+                <div className="border border-border rounded-md">
+                  <button
+                    onClick={() => toggleSection("casualties")}
+                    className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
+                  >
+                    <span className="font-medium text-sm">Casualties ({generatedScenario.casualties.length})</span>
+                    {expandedSections.has("casualties") ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                  </button>
+                  {expandedSections.has("casualties") && (
+                    <div className="p-3 space-y-3 border-t border-border bg-muted/20">
+                      {generatedScenario.casualties.map((casualty, idx) => (
+                        <div key={idx} className="border border-border rounded bg-background p-3 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-semibold text-muted-foreground">{casualty.id}</span>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => removeCasualty(idx)}
+                              className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                          <input
+                            type="text"
+                            value={casualty.injury_type}
+                            onChange={(e) => updateCasualty(idx, "injury_type", e.target.value)}
+                            placeholder="Injury type"
+                            className="w-full px-2 py-1 text-xs rounded bg-input border border-border focus:outline-none focus:ring-1 focus:ring-primary"
+                          />
+                          <div className="grid grid-cols-2 gap-2">
+                            <input
+                              type="text"
+                              value={casualty.severity}
+                              onChange={(e) => updateCasualty(idx, "severity", e.target.value)}
+                              placeholder="Severity"
+                              className="w-full px-2 py-1 text-xs rounded bg-input border border-border focus:outline-none focus:ring-1 focus:ring-primary"
+                            />
+                            <input
+                              type="text"
+                              value={casualty.location}
+                              onChange={(e) => updateCasualty(idx, "location", e.target.value)}
+                              placeholder="Location"
+                              className="w-full px-2 py-1 text-xs rounded bg-input border border-border focus:outline-none focus:ring-1 focus:ring-primary"
+                            />
+                          </div>
+                        </div>
+                      ))}
+                      <Button onClick={addCasualty} size="sm" variant="outline" className="w-full bg-transparent">
+                        <Plus className="h-3 w-3 mr-1" /> Add Casualty
                       </Button>
                     </div>
-                  </>
-                )}
-              </>
-            ) : (
-              <div className="flex items-center justify-center h-full py-16 text-center">
-                <div className="space-y-3">
-                  <div className="text-4xl">🤖</div>
-                  <p className="text-sm text-muted-foreground">
-                    Click "Generate Scenario" to start
-                    <br />
-                    creating your VR training course
-                  </p>
+                  )}
                 </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+
+                {/* Injects Section */}
+                <div className="border border-border rounded-md">
+                  <button
+                    onClick={() => toggleSection("injects")}
+                    className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
+                  >
+                    <span className="font-medium text-sm">Injects ({generatedScenario.injects.length})</span>
+                    {expandedSections.has("injects") ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                  </button>
+                  {expandedSections.has("injects") && (
+                    <div className="p-3 space-y-3 border-t border-border bg-muted/20">
+                      {generatedScenario.injects.map((inject, idx) => (
+                        <div key={idx} className="border border-border rounded bg-background p-3 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <input
+                              type="number"
+                              value={inject.time}
+                              onChange={(e) => updateInject(idx, "time", Number.parseInt(e.target.value))}
+                              placeholder="Time (s)"
+                              className="w-20 px-2 py-1 text-xs rounded bg-input border border-border focus:outline-none focus:ring-1 focus:ring-primary"
+                            />
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => removeInject(idx)}
+                              className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                          <input
+                            type="text"
+                            value={inject.event}
+                            onChange={(e) => updateInject(idx, "event", e.target.value)}
+                            placeholder="Event"
+                            className="w-full px-2 py-1 text-xs rounded bg-input border border-border focus:outline-none focus:ring-1 focus:ring-primary"
+                          />
+                          <input
+                            type="text"
+                            value={inject.description}
+                            onChange={(e) => updateInject(idx, "description", e.target.value)}
+                            placeholder="Description"
+                            className="w-full px-2 py-1 text-xs rounded bg-input border border-border focus:outline-none focus:ring-1 focus:ring-primary"
+                          />
+                        </div>
+                      ))}
+                      <Button onClick={addInject} size="sm" variant="outline" className="w-full bg-transparent">
+                        <Plus className="h-3 w-3 mr-1" /> Add Inject
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Objectives Section */}
+                <div className="border border-border rounded-md">
+                  <button
+                    onClick={() => toggleSection("objectives")}
+                    className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
+                  >
+                    <span className="font-medium text-sm">Objectives ({generatedScenario.objectives.length})</span>
+                    {expandedSections.has("objectives") ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                  </button>
+                  {expandedSections.has("objectives") && (
+                    <div className="p-3 space-y-2 border-t border-border bg-muted/20">
+                      {generatedScenario.objectives.map((obj, idx) => (
+                        <div key={idx} className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={obj}
+                            onChange={(e) => updateArrayItem("objectives", idx, e.target.value)}
+                            className="flex-1 px-2 py-1 text-xs rounded bg-background border border-border focus:outline-none focus:ring-1 focus:ring-primary"
+                          />
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => removeArrayItem("objectives", idx)}
+                            className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ))}
+                      <Button onClick={() => addArrayItem("objectives")} size="sm" variant="outline" className="w-full">
+                        <Plus className="h-3 w-3 mr-1" /> Add Objective
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Expected Actions Section */}
+                <div className="border border-border rounded-md">
+                  <button
+                    onClick={() => toggleSection("actions")}
+                    className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
+                  >
+                    <span className="font-medium text-sm">
+                      Expected Actions ({generatedScenario.expected_actions.length})
+                    </span>
+                    {expandedSections.has("actions") ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                  </button>
+                  {expandedSections.has("actions") && (
+                    <div className="p-3 space-y-2 border-t border-border bg-muted/20">
+                      {generatedScenario.expected_actions.map((action, idx) => (
+                        <div key={idx} className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={action}
+                            onChange={(e) => updateArrayItem("expected_actions", idx, e.target.value)}
+                            className="flex-1 px-2 py-1 text-xs rounded bg-background border border-border focus:outline-none focus:ring-1 focus:ring-primary"
+                          />
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => removeArrayItem("expected_actions", idx)}
+                            className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ))}
+                      <Button
+                        onClick={() => addArrayItem("expected_actions")}
+                        size="sm"
+                        variant="outline"
+                        className="w-full"
+                      >
+                        <Plus className="h-3 w-3 mr-1" /> Add Action
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Evaluation Metrics Section */}
+                <div className="border border-border rounded-md">
+                  <button
+                    onClick={() => toggleSection("metrics")}
+                    className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
+                  >
+                    <span className="font-medium text-sm">
+                      Evaluation Metrics ({generatedScenario.evaluation_metrics.length})
+                    </span>
+                    {expandedSections.has("metrics") ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                  </button>
+                  {expandedSections.has("metrics") && (
+                    <div className="p-3 space-y-2 border-t border-border bg-muted/20">
+                      {generatedScenario.evaluation_metrics.map((metric, idx) => (
+                        <div key={idx} className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={metric}
+                            onChange={(e) => updateArrayItem("evaluation_metrics", idx, e.target.value)}
+                            className="flex-1 px-2 py-1 text-xs rounded bg-background border border-border focus:outline-none focus:ring-1 focus:ring-primary"
+                          />
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => removeArrayItem("evaluation_metrics", idx)}
+                            className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ))}
+                      <Button
+                        onClick={() => addArrayItem("evaluation_metrics")}
+                        size="sm"
+                        variant="outline"
+                        className="w-full"
+                      >
+                        <Plus className="h-3 w-3 mr-1" /> Add Metric
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                <Button
+                  onClick={handleSavePublish}
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+                  disabled={isSaving}
+                >
+                  {isSaving ? "Saving..." : "Save & Publish Course"}
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
     </div>
   )
