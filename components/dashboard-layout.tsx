@@ -22,7 +22,7 @@ export function DashboardLayout({
   return (
     <div className="flex">
       <Sidebar userRole={userRole} onLogout={onLogout} onNavigate={onNavigate} />
-      <div className="flex-1 ml-64">
+      <div className="flex-1 ml-64 bg-card">
         <TopNavbar userRole={userRole} userName={userName} />
         <main className="mt-16 p-8 bg-background min-h-screen">
           {children}
