@@ -27,7 +27,7 @@ export function LoginModal({ onLogin }: LoginModalProps) {
             <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAwIDEwIEwgNDAgMTAgTSAxMCAwIEwgMTAgNDAgTSAwIDIwIEwgNDAgMjAgTSAyMCAwIEwgMjAgNDAgTSAwIDMwIEwgNDAgMzAgTSAzMCAwIEwgMzAgNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS1vcGFjaXR5PSIwLjA1IiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQiKSIvPjwvc3ZnPg=')] opacity-30"></div>
             <div className="relative">
               <div className="w-24 h-24 mx-auto mb-4 flex items-center justify-center">
-                <img src="/images/image.png" alt="Tactex Logo" className="w-full h-full object-contain" />
+                
               </div>
               <h1 className="text-2xl font-bold text-white mb-2">TACTEX</h1>
               <p className="text-white/80 text-sm">AI-driven Tactical Medical Training System Using VR</p>
