@@ -1,62 +1,94 @@
-'use client';
+"use client"
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
 interface AdminCreateCourseProps {
-  onPublish?: () => void;
+  onPublish?: () => void
 }
 
 const validationErrors = [
-  'Missing Airway step in MARCH sequence.',
-  'Vital signs are incomplete for casualty #1.',
-];
+  "Missing Respiration check in MARCH sequence.",
+  "Tourniquet application time not specified for casualty #1.",
+]
 
 const scenarioData = {
-  environment: 'Urban street',
-  numberOfCasualties: 2,
-  injuryType: 'Severe hemorrhage',
+  environment: "Urban street - post-engagement",
+  skillCategory: "Hemorrhage Control",
+  difficulty: "Medium",
+  numberOfCasualties: 1,
+  injuryType: "Severe lower limb hemorrhage",
   timeLimit: 300,
-  requiredActions: ['Control Bleeding', 'Airway Management', 'Shock Prevention'],
-};
+  requiredActions: ["Massive Hemorrhage", "Airway", "Respiration", "Circulation", "Hypothermia"],
+  protocol: "MARCH",
+  assetCount: 12,
+  fpsTarget: 90,
+}
 
 export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
-  const [courseName, setCourseName] = useState('');
-  const [description, setDescription] = useState('');
-  const [injuryType, setInjuryType] = useState('Severe hemorrhage');
-  const [environment, setEnvironment] = useState('Urban street');
-  const [difficulty, setDifficulty] = useState('Medium');
-  const [traineeType, setTraineeType] = useState('Combat soldier');
-  const [timeLimit, setTimeLimit] = useState('300');
-  const [casualties, setCasualties] = useState('1');
+  const [courseName, setCourseName] = useState("")
+  const [description, setDescription] = useState("")
+  const [skillCategory, setSkillCategory] = useState("Hemorrhage Control")
+  const [skill, setSkill] = useState("Tourniquet Application")
+  const [difficulty, setDifficulty] = useState("Medium")
+  const [showChatbot, setShowChatbot] = useState(false)
+  const [chatMessages, setChatMessages] = useState<Array<{ role: string; content: string }>>([])
+  const [userInput, setUserInput] = useState("")
+
+  const handleGenerateScenario = () => {
+    setShowChatbot(true)
+    setChatMessages([
+      {
+        role: "assistant",
+        content:
+          "Hello! I'm your AI scenario generator. Please specify the skill category, skill, and difficulty level for your training scenario.",
+      },
+    ])
+  }
+
+  const handleSendMessage = () => {
+    if (!userInput.trim()) return
+
+    setChatMessages([
+      ...chatMessages,
+      { role: "user", content: userInput },
+      {
+        role: "assistant",
+        content:
+          "Generating scenario based on your specifications... I've created a combat medical scenario focusing on hemorrhage control in an urban environment. The scenario includes validation checks for TCCC protocol compliance and OpenXR compatibility.",
+      },
+    ])
+    setUserInput("")
+  }
 
   const handleSavePublish = () => {
-    console.log('[v0] Publishing course and navigating to visualization');
+    console.log("[v0] Publishing course with validation checks")
     if (onPublish) {
-      onPublish();
+      onPublish()
     }
-  };
+  }
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Create / Edit Course</h1>
-        <p className="text-muted-foreground">Configure training scenarios with AI assistance</p>
+        <h1 className="text-3xl font-bold text-foreground">Create Course</h1>
+        <p className="text-muted-foreground">AI-powered scenario generation with validation</p>
       </div>
 
       <div className="grid grid-cols-2 gap-6">
-        {/* Left Column - Scenario Details */}
+        {/* Left Column - Scenario Configuration */}
         <Card>
           <CardHeader>
-            <CardTitle>Scenario Details</CardTitle>
+            <CardTitle>Scenario Configuration</CardTitle>
+            <CardDescription>Define parameters for AI generation</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">Course Name</label>
               <input
                 type="text"
-                placeholder="Enter course name"
+                placeholder="e.g., Hemorrhage Control - Urban Combat"
                 value={courseName}
                 onChange={(e) => setCourseName(e.target.value)}
                 className="w-full px-4 py-2 rounded-md bg-input text-foreground placeholder:text-muted-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary"
@@ -64,38 +96,42 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Short Description</label>
+              <label className="text-sm font-medium text-foreground">Description</label>
               <textarea
-                placeholder="Enter course description"
+                placeholder="Brief description of the training objective"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="w-full px-4 py-2 rounded-md bg-input text-foreground placeholder:text-muted-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary resize-none h-24"
+                className="w-full px-4 py-2 rounded-md bg-input text-foreground placeholder:text-muted-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary resize-none h-20"
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Injury Type</label>
+              <label className="text-sm font-medium text-foreground">Skill Category</label>
               <select
-                value={injuryType}
-                onChange={(e) => setInjuryType(e.target.value)}
+                value={skillCategory}
+                onChange={(e) => setSkillCategory(e.target.value)}
                 className="w-full px-4 py-2 rounded-md bg-input text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary"
               >
-                <option>Severe hemorrhage</option>
-                <option>Chest injury</option>
-                <option>Abdominal trauma</option>
+                <option>Hemorrhage Control</option>
+                <option>Airway Management</option>
+                <option>Chest Trauma</option>
+                <option>Shock Management</option>
+                <option>Mass Casualty Triage</option>
               </select>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Environment</label>
+              <label className="text-sm font-medium text-foreground">Skill</label>
               <select
-                value={environment}
-                onChange={(e) => setEnvironment(e.target.value)}
+                value={skill}
+                onChange={(e) => setSkill(e.target.value)}
                 className="w-full px-4 py-2 rounded-md bg-input text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary"
               >
-                <option>Urban street</option>
-                <option>Battlefield</option>
-                <option>Ambulance</option>
+                <option>Tourniquet Application</option>
+                <option>Wound Packing</option>
+                <option>Pressure Dressing</option>
+                <option>Nasopharyngeal Airway</option>
+                <option>Chest Seal Application</option>
               </select>
             </div>
 
@@ -112,97 +148,122 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
               </select>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Trainee Type</label>
-              <select
-                value={traineeType}
-                onChange={(e) => setTraineeType(e.target.value)}
-                className="w-full px-4 py-2 rounded-md bg-input text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-                <option>Combat soldier</option>
-                <option>Military medic</option>
-              </select>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Time Limit (seconds)</label>
-                <input
-                  type="number"
-                  value={timeLimit}
-                  onChange={(e) => setTimeLimit(e.target.value)}
-                  className="w-full px-4 py-2 rounded-md bg-input text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Number of Casualties</label>
-                <input
-                  type="number"
-                  value={casualties}
-                  onChange={(e) => setCasualties(e.target.value)}
-                  className="w-full px-4 py-2 rounded-md bg-input text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-              </div>
-            </div>
-
             <div className="flex gap-3 pt-4">
-              <Button className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground">
-                Generate Scenario with AI
+              <Button
+                onClick={handleGenerateScenario}
+                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
+              >
+                Generate Scenario
               </Button>
-              <Button variant="outline" className="flex-1">
+              <Button variant="outline" className="flex-1 bg-transparent">
                 Clear Fields
               </Button>
             </div>
           </CardContent>
         </Card>
 
-        {/* Right Column - AI Output */}
+        {/* Right Column - AI Chatbot & Output */}
         <Card>
           <CardHeader>
-            <CardTitle>AI Output</CardTitle>
+            <CardTitle>AI Scenario Generator</CardTitle>
+            <CardDescription>Powered by RAG Agent</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Scenario Narrative</label>
-              <textarea
-                readOnly
-                value="You arrive at an urban street after a small-arms engagement. A soldier is lying on the ground with severe bleeding from the lower limb. The casualty is conscious and alert, showing signs of shock. Your immediate priority is to control the bleeding and prevent further deterioration."
-                className="w-full px-4 py-2 rounded-md bg-muted text-foreground border border-border resize-none h-24"
-              />
-            </div>
+            {showChatbot ? (
+              <>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">Chat with AI</label>
+                  <div className="border border-border rounded-md bg-muted/50 p-4 h-48 overflow-y-auto space-y-3">
+                    {chatMessages.map((msg, idx) => (
+                      <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                        <div
+                          className={`max-w-[80%] px-3 py-2 rounded-lg text-sm ${
+                            msg.role === "user"
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-background border border-border text-foreground"
+                          }`}
+                        >
+                          {msg.content}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Specify modifications or confirm..."
+                      value={userInput}
+                      onChange={(e) => setUserInput(e.target.value)}
+                      onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
+                      className="flex-1 px-4 py-2 rounded-md bg-input text-foreground placeholder:text-muted-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                    <Button onClick={handleSendMessage} size="sm">
+                      Send
+                    </Button>
+                  </div>
+                </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Scenario Data (JSON)</label>
-              <pre className="w-full px-4 py-2 rounded-md bg-muted text-foreground border border-border overflow-auto text-xs h-32">
-                {JSON.stringify(scenarioData, null, 2)}
-              </pre>
-            </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">Generated Scenario (JSON)</label>
+                  <pre className="w-full px-4 py-2 rounded-md bg-muted text-foreground border border-border overflow-auto text-xs h-32">
+                    {JSON.stringify(scenarioData, null, 2)}
+                  </pre>
+                </div>
 
-            <div className="space-y-2">
-              <div className="bg-destructive/10 border border-destructive/30 rounded-md p-4 space-y-2">
-                <label className="text-sm font-semibold text-destructive">Validation Errors</label>
-                <ul className="space-y-1">
-                  {validationErrors.map((error, idx) => (
-                    <li key={idx} className="text-xs text-destructive/80">• {error}</li>
-                  ))}
-                </ul>
+                <div className="space-y-2">
+                  <div className="bg-destructive/10 border border-destructive/30 rounded-md p-4 space-y-2">
+                    <label className="text-sm font-semibold text-destructive flex items-center gap-2">
+                      ⚠️ Validation Checks
+                    </label>
+                    <div className="space-y-1">
+                      <div className="text-xs text-foreground">✓ TCCC/MARCH protocol compliance</div>
+                      <div className="text-xs text-foreground">
+                        ✓ Asset count within limits ({scenarioData.assetCount})
+                      </div>
+                      <div className="text-xs text-foreground">
+                        ✓ FPS target achievable ({scenarioData.fpsTarget}fps)
+                      </div>
+                    </div>
+                    {validationErrors.length > 0 && (
+                      <ul className="space-y-1 mt-2 pt-2 border-t border-destructive/20">
+                        {validationErrors.map((error, idx) => (
+                          <li key={idx} className="text-xs text-destructive/80">
+                            • {error}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <Button variant="outline" className="flex-1 bg-transparent" onClick={() => setShowChatbot(true)}>
+                    Edit Scenario
+                  </Button>
+                  <Button
+                    onClick={handleSavePublish}
+                    className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
+                    disabled={validationErrors.length > 0}
+                  >
+                    Save & Publish
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center justify-center h-full py-16 text-center">
+                <div className="space-y-3">
+                  <div className="text-4xl">🤖</div>
+                  <p className="text-sm text-muted-foreground">
+                    Click "Generate Scenario" to start
+                    <br />
+                    creating your VR training course
+                  </p>
+                </div>
               </div>
-            </div>
-
-            <div className="flex gap-3 pt-4">
-              <Button variant="outline" className="flex-1">
-                Refine with AI
-              </Button>
-              <Button 
-                onClick={handleSavePublish}
-                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
-              >
-                Save & Publish
-              </Button>
-            </div>
+            )}
           </CardContent>
         </Card>
       </div>
     </div>
-  );
+  )
 }
