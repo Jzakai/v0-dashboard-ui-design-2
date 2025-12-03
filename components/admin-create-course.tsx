@@ -42,7 +42,6 @@ const skillsByCategory: Record<string, string[]> = {
 
 export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
   const [courseName, setCourseName] = useState("")
-  const [description, setDescription] = useState("")
   const [skillCategory, setSkillCategory] = useState("Care Under Fire")
   const [skill, setSkill] = useState("Hemorrhage control")
   const [difficulty, setDifficulty] = useState("Medium")
@@ -87,7 +86,6 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
         },
         body: JSON.stringify({
           courseName,
-          description,
           skillCategory,
           skill,
           difficulty,
@@ -173,7 +171,6 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
         },
         body: JSON.stringify({
           courseName,
-          description,
           skillCategory,
           skill,
           difficulty,
@@ -321,16 +318,6 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Description</label>
-              <textarea
-                placeholder="Brief description of the training objective"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="w-full px-4 py-2 rounded-md bg-input text-foreground placeholder:text-muted-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary resize-none h-20"
-              />
-            </div>
-
-            <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">Skill Category</label>
               <select
                 value={skillCategory}
@@ -384,7 +371,6 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
                 className="flex-1 bg-transparent"
                 onClick={() => {
                   setCourseName("")
-                  setDescription("")
                   setShowChatbot(false)
                   setScenarioGenerated(false)
                   setGeneratedScenario(null)
