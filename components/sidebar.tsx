@@ -10,7 +10,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ userRole, onLogout, onNavigate }: SidebarProps) {
-  const [activeItem, setActiveItem] = useState(userRole === "admin" ? "analytics" : "dashboard")
+  const [activeItem, setActiveItem] = useState(userRole === "admin" ? "analytics" : "my-trainings")
 
   const adminItems = [
     { id: "create-course", label: "Create Course", icon: "✨", description: "AI-powered" },
@@ -19,7 +19,6 @@ export function Sidebar({ userRole, onLogout, onNavigate }: SidebarProps) {
   ]
 
   const traineeItems = [
-    { id: "dashboard", label: "Dashboard", icon: "📊", description: "My overview" },
     { id: "my-trainings", label: "My Trainings", icon: "🎯", description: "VR courses" },
     { id: "my-results", label: "My Results", icon: "📈", description: "AAR & feedback" },
   ]
