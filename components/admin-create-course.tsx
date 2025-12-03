@@ -177,11 +177,9 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
                 onChange={(e) => setSkillCategory(e.target.value)}
                 className="w-full px-4 py-2 rounded-md bg-input text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary"
               >
-                <option>Hemorrhage Control</option>
-                <option>Airway Management</option>
-                <option>Chest Trauma</option>
-                <option>Shock Management</option>
-                <option>Mass Casualty Triage</option>
+                <option>Care Under Fire</option>
+                <option>Tactical Field Care</option>
+                <option>Tactical Evacuation</option>
               </select>
             </div>
 
