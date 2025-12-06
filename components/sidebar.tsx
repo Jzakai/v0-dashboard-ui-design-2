@@ -11,7 +11,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ userRole, onLogout, onNavigate }: SidebarProps) {
-  const [activeItem, setActiveItem] = useState(userRole === "admin" ? "analytics" : "my-trainings")
+  const [activeItem, setActiveItem] = useState(userRole === "admin" ? "create-course" : "my-trainings")
 
   const adminItems = [
     { id: "create-course", label: "Create Course", icon: Plus, description: "AI-powered" },
