@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { cn } from "@/lib/utils"
-import { Sparkles, Users, TrendingUp, Target, LogOut } from "lucide-react"
+import { Plus, Users, TrendingUp, Target, LogOut } from "lucide-react"
 
 interface SidebarProps {
   userRole: "admin" | "trainee"
@@ -14,7 +14,7 @@ export function Sidebar({ userRole, onLogout, onNavigate }: SidebarProps) {
   const [activeItem, setActiveItem] = useState(userRole === "admin" ? "analytics" : "my-trainings")
 
   const adminItems = [
-    { id: "create-course", label: "Create Course", icon: Sparkles, description: "AI-powered" },
+    { id: "create-course", label: "Create Course", icon: Plus, description: "AI-powered" },
     { id: "assign-courses", label: "Assign Courses", icon: Users, description: "To trainees" },
     { id: "analytics", label: "AAR Analytics", icon: TrendingUp, description: "Performance" },
   ]
