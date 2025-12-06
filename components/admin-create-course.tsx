@@ -422,7 +422,7 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
               ) : (
                 <div className="flex items-center justify-center py-12 text-center">
                   <div className="space-y-3">
-                    <div className="text-4xl">🤖</div>
+                    <div className="text-4xl"><br></div>
                     <p className="text-sm text-muted-foreground">
                       Click "Generate Scenario" to start
                       <br />
