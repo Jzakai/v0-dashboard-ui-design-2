@@ -1,6 +1,7 @@
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { BookOpen, Users, Target } from "lucide-react"
 
 export default function AdminDashboard() {
   return (
@@ -21,7 +22,7 @@ export default function AdminDashboard() {
         <Card className="bg-gradient-to-br from-card to-primary/5 border-primary/20 shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader>
             <CardTitle className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
-              <span className="text-2xl">📚</span>
+              <BookOpen className="w-5 h-5 text-primary" />
               VR Courses
             </CardTitle>
           </CardHeader>
@@ -39,7 +40,7 @@ export default function AdminDashboard() {
         <Card className="bg-gradient-to-br from-card to-accent/5 border-accent/20 shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader>
             <CardTitle className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
-              <span className="text-2xl">👥</span>
+              <Users className="w-5 h-5 text-accent" />
               Active Trainees
             </CardTitle>
           </CardHeader>
@@ -57,7 +58,7 @@ export default function AdminDashboard() {
         <Card className="bg-gradient-to-br from-card to-primary/5 border-primary/20 shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader>
             <CardTitle className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
-              <span className="text-2xl">🎯</span>
+              <Target className="w-5 h-5 text-primary" />
               VR Sessions (Week)
             </CardTitle>
           </CardHeader>

@@ -1,5 +1,3 @@
-
-
 def save_scenario(scenario_json, skill, skill_category, difficulty, version):
     result = supabase.table("scenarios").insert({
         "scenario_json": scenario_json,

@@ -1,4 +1,3 @@
-
 from agent.rag_agent_openrouter import generate_scenario_from_agent, modify_scenario_with_agent
 from repositories import scenario_repo
 from utils.schema_validator import validate_scenario_schema
@@ -70,4 +69,3 @@ def orchestrate_edit_scenario(req):
     )
 
     return {"status": "Saved", "scenario_id": req.scenario_id}
-

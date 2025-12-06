@@ -18,4 +18,3 @@ def save_scenario(req: SaveScenarioRequest):
 @router.post("/edit_scenario")
 def edit_scenario(req: SaveScenarioRequest):
     return orchestrate_save_scenario(req)
-

@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Check, AlertTriangle } from "lucide-react"
 
 const resultsData = [
   {
@@ -140,8 +141,13 @@ export function TraineeMyResults() {
                               <div className="flex-1 text-sm text-foreground">
                                 {label}: <span className="font-semibold">{value}s</span>
                               </div>
-                              <div className="text-xs text-muted-foreground">
-                                Target: ≤{target}s {isOnTarget ? "✓" : "⚠️"}
+                              <div className="text-xs text-muted-foreground flex items-center gap-1">
+                                Target: ≤{target}s
+                                {isOnTarget ? (
+                                  <Check className="w-3.5 h-3.5 text-primary" />
+                                ) : (
+                                  <AlertTriangle className="w-3.5 h-3.5 text-accent" />
+                                )}
                               </div>
                             </div>
                           )

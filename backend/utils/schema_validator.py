@@ -1,4 +1,3 @@
-
 def validate_scenario_schema(scenario):
     required_fields = [
         "environment",

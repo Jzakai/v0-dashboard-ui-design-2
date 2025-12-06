@@ -19,4 +19,3 @@ class SaveScenarioRequest(BaseModel):
 
 class EditScenarioRequest(BaseModel):
     edits: str
-

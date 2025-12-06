@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { cn } from "@/lib/utils"
+import { Sparkles, Users, TrendingUp, Target, LogOut } from "lucide-react"
 
 interface SidebarProps {
   userRole: "admin" | "trainee"
@@ -13,14 +14,14 @@ export function Sidebar({ userRole, onLogout, onNavigate }: SidebarProps) {
   const [activeItem, setActiveItem] = useState(userRole === "admin" ? "analytics" : "my-trainings")
 
   const adminItems = [
-    { id: "create-course", label: "Create Course", icon: "✨", description: "AI-powered" },
-    { id: "assign-courses", label: "Assign Courses", icon: "👥", description: "To trainees" },
-    { id: "analytics", label: "AAR Analytics", icon: "📈", description: "Performance" },
+    { id: "create-course", label: "Create Course", icon: Sparkles, description: "AI-powered" },
+    { id: "assign-courses", label: "Assign Courses", icon: Users, description: "To trainees" },
+    { id: "analytics", label: "AAR Analytics", icon: TrendingUp, description: "Performance" },
   ]
 
   const traineeItems = [
-    { id: "my-trainings", label: "My Trainings", icon: "🎯", description: "VR courses" },
-    { id: "my-results", label: "My Results", icon: "📈", description: "AAR & feedback" },
+    { id: "my-trainings", label: "My Trainings", icon: Target, description: "VR courses" },
+    { id: "my-results", label: "My Results", icon: TrendingUp, description: "AAR & feedback" },
   ]
 
   const items = userRole === "admin" ? adminItems : traineeItems
@@ -54,33 +55,40 @@ export function Sidebar({ userRole, onLogout, onNavigate }: SidebarProps) {
 
       {/* Navigation Items */}
       <nav className="flex-1 overflow-y-auto p-4 space-y-1">
-        {items.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => handleClick(item.id)}
-            className={cn(
-              "w-full flex items-start gap-4 px-4 py-3.5 rounded-xl transition-all group",
-              activeItem === item.id
-                ? "bg-gradient-to-r from-primary to-accent text-white shadow-lg shadow-primary/20"
-                : "text-sidebar-foreground hover:bg-sidebar-accent/10 hover:text-sidebar-foreground",
-            )}
-          >
-            <span className="text-2xl mt-0.5">{item.icon}</span>
-            <div className="flex-1 text-left">
-              <div
-                className={cn(
-                  "text-sm font-semibold",
-                  activeItem === item.id ? "text-white" : "text-sidebar-foreground",
-                )}
-              >
-                {item.label}
+        {items.map((item) => {
+          const IconComponent = item.icon
+          return (
+            <button
+              key={item.id}
+              onClick={() => handleClick(item.id)}
+              className={cn(
+                "w-full flex items-start gap-4 px-4 py-3.5 rounded-xl transition-all group",
+                activeItem === item.id
+                  ? "bg-gradient-to-r from-primary to-accent text-white shadow-lg shadow-primary/20"
+                  : "text-sidebar-foreground hover:bg-sidebar-accent/10 hover:text-sidebar-foreground",
+              )}
+            >
+              <IconComponent
+                className={cn("w-5 h-5 mt-0.5 flex-shrink-0", activeItem === item.id ? "text-white" : "text-primary")}
+              />
+              <div className="flex-1 text-left">
+                <div
+                  className={cn(
+                    "text-sm font-semibold",
+                    activeItem === item.id ? "text-white" : "text-sidebar-foreground",
+                  )}
+                >
+                  {item.label}
+                </div>
+                <div
+                  className={cn("text-xs mt-0.5", activeItem === item.id ? "text-white/80" : "text-muted-foreground")}
+                >
+                  {item.description}
+                </div>
               </div>
-              <div className={cn("text-xs mt-0.5", activeItem === item.id ? "text-white/80" : "text-muted-foreground")}>
-                {item.description}
-              </div>
-            </div>
-          </button>
-        ))}
+            </button>
+          )
+        })}
       </nav>
 
       {/* User Info & Logout */}
@@ -89,7 +97,7 @@ export function Sidebar({ userRole, onLogout, onNavigate }: SidebarProps) {
           onClick={onLogout}
           className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sidebar-foreground hover:bg-destructive/10 hover:text-destructive transition-all"
         >
-          <span className="text-xl">🚪</span>
+          <LogOut className="w-5 h-5" />
           <span className="text-sm font-semibold">Sign Out</span>
         </button>
       </div>

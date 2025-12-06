@@ -5,5 +5,3 @@ node_modules
 # Python junk
 __pycache__/
 *.pyc
-
-
