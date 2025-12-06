@@ -296,7 +296,7 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-foreground">Create Course</h1>
-        <p className="text-muted-foreground">AI-powered scenario generation with RAG Agent</p>
+        <p className="text-muted-foreground">AI-powered Tactical Medical Training scenario generation with RAG Agent</p>
       </div>
 
       <div className="grid grid-cols-2 gap-6">
