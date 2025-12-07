@@ -5,9 +5,14 @@ import type React from "react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 
+//interface LoginModalProps {
+//  onLogin: (role: "admin" | "trainee", name: string) => void
+//}
+
 interface LoginModalProps {
-  onLogin: (role: "admin" | "trainee", name: string) => void
+  onLogin: (role: "admin" | "trainee", name: string, userId: string) => void
 }
+
 
 export function LoginModal({ onLogin }: LoginModalProps) {
   const [isSignup, setIsSignup] = useState(false)
@@ -37,8 +42,18 @@ export function LoginModal({ onLogin }: LoginModalProps) {
           throw new Error(data.error || "Signup failed")
         }
 
+        // Extract user info from backend response
+      const userId = data.user.user_id
+      const userName = data.user.name
+      const userRole = data.user.role
+
+      // Store in localStorage
+      localStorage.setItem("user_id", userId)
+      localStorage.setItem("name", userName)
+      localStorage.setItem("role", userRole)
+
         // Auto-login after successful signup
-        onLogin(role, name)
+        onLogin(role, name, userId)
       } else {
         const response = await fetch("/api/auth/login", {
           method: "POST",
@@ -48,11 +63,22 @@ export function LoginModal({ onLogin }: LoginModalProps) {
 
         const data = await response.json()
 
+ 
         if (!response.ok) {
           throw new Error(data.error || "Login failed")
         }
 
-        onLogin(data.role, data.name)
+        // Extract user info from backend response
+      const userId = data.user.user_id
+      const userName = data.user.name
+      const userRole = data.user.role
+
+      // Store in localStorage
+      localStorage.setItem("user_id", userId)
+      localStorage.setItem("name", userName)
+      localStorage.setItem("role", userRole)
+
+        onLogin(data.role, data.name, data.userId)
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred")

@@ -51,6 +51,7 @@ async def signup(request: SignupRequest):
         return {
             "message": "User created successfully",
             "user": {
+                "user_id": result.data[0]["user_id"],
                 "email": request.email,
                 "name": request.name,
                 "role": request.role
@@ -81,6 +82,7 @@ async def login(request: LoginRequest):
         return {
             "message": "Login successful",
             "user": {
+                "user_id":user["user_id"],
                 "email": user["email"],
                 "name": user["name"],
                 "role": user["role"]

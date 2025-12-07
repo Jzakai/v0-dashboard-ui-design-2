@@ -17,8 +17,9 @@ def save_scenario(scenario_json, skill, skill_category, difficulty, version):
     return result.data[0]["scenario_id"]
 
 
-def update_scenario(scenario_id, scenario_json, skill, skill_category, difficulty, course_name, status):
+def update_scenario(user_id, scenario_id, scenario_json, skill, skill_category, difficulty, course_name, status):
     supabase.table("scenarios").update({
+        "created_by": user_id,
         "scenario_spec": scenario_json,
         "skill": skill,
         "skill_category": skill_category,

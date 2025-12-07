@@ -8,6 +8,7 @@ class GenerateScenarioRequest(BaseModel):
 
 
 class SaveScenarioRequest(BaseModel):
+    user_id: str | None = None
     scenario_id: str | None = None
     scenario_json: Dict
     skill: str

@@ -62,6 +62,7 @@ def orchestrate_save_scenario(req):
 
     # Save FINAL VERSION
     scenario_repo.update_scenario(
+        user_id = req.user_id,
         scenario_id=req.scenario_id,
         scenario_json=updated_json,
         skill=req.skill,

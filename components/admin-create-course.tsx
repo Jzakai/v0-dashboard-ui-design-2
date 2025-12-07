@@ -164,6 +164,7 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+      user_id: localStorage.getItem("user_id"),
       scenario_id: scenarioId,
       scenario_json: generatedScenario,
       skill: skill,
