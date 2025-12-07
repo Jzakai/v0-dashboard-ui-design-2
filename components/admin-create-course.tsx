@@ -67,6 +67,8 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
   const [isGenerating, setIsGenerating] = useState(false)
   const [scenarioGenerated, setScenarioGenerated] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [scenarioId, setScenarioId] = useState<string | null>(null)
+
 
   const [generatedScenario, setGeneratedScenario] = useState<GeneratedScenario | null>(null)
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set())
@@ -94,7 +96,7 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
     // Send POST request to backend
     try {
       setIsGenerating(true)
-      const response = await fetch("/scenario/generate_scenario", {
+      const response = await fetch("http://localhost:8000/scenario/generate_scenario", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -110,8 +112,13 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
 
+      //added
       const data = await response.json()
       console.log("[v0] Backend response:", data)
+
+      if (data.scenario_id) {
+        setScenarioId(data.scenario_id)
+        }
 
       if (data.scenario_spec && data.rationale) {
         const parsedScenario: GeneratedScenario = {
@@ -151,18 +158,19 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
     setIsSaving(true)
 
     try {
-      const response = await fetch("/save_scenario", {
+      const response = await fetch("http://localhost:8000/scenario/save_scenario", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          courseName,
-          skillCategory,
-          skill,
-          difficulty,
-          scenario: generatedScenario,
-        }),
+      scenario_id: scenarioId,
+      scenario_json: generatedScenario,
+      skill: skill,
+      skill_category: skillCategory,
+      difficulty: difficulty,
+      course_name: courseName,
+    }),
       })
 
       if (!response.ok) {

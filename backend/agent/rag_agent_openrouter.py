@@ -1,6 +1,8 @@
 from textwrap import dedent
 import os
 from dotenv import load_dotenv
+import json
+import re
 
 from langchain_community.chat_models import ChatOpenAI
 from langchain_community.document_loaders import PyPDFLoader
@@ -137,9 +139,24 @@ def generate_scenario_from_agent(skill_category: str, skill: str, difficulty: st
 
     # Run LCEL
     result = rag_chain.invoke(instructions)
+    print(result)
 
-    return result.content
+    llm_output = result.content
 
+
+    scenario_spec = extract_json_from_llm_output(llm_output)
+    rationale_text = extract_rationale(llm_output)
+
+    print(scenario_spec)
+
+    
+    return {
+        "scenario_spec": scenario_spec,
+        "rationale": rationale_text
+    }
+
+
+    
 
 # Scenario Modification
 def modify_scenario_with_agent(existing_json: str, edits: str):
@@ -157,3 +174,72 @@ def modify_scenario_with_agent(existing_json: str, edits: str):
     """
 
     return llm.invoke(instructions).content
+
+
+
+
+def normalize_scenario_spec(spec: dict):
+    # Ensure objectives always have type + description
+    spec["objectives"] = [
+        {
+            "type": o.get("type", "Medical"),
+            "description": o.get("description", "")
+        }
+        for o in spec.get("objectives", [])
+    ]
+
+    # Ensure injects always have type + location
+    spec["injects"] = [
+        {
+            "type": inj.get("type", "Event"),
+            "location": inj.get("location", "General Area"),
+        }
+        for inj in spec.get("injects", [])
+    ]
+
+    # Ensure environment shape is correct
+    spec["environment"] = {
+        "location": spec.get("environment", {}).get("location", "Unknown"),
+        "terrain": spec.get("environment", {}).get("terrain", "Unknown"),
+        "weather": spec.get("environment", {}).get("weather", "Unknown"),
+    }
+
+    return spec
+
+def extract_json_from_llm_output(text: str) -> dict:
+    """
+    Extracts the FIRST JSON block inside ```json ... ``` from an LLM output.
+    Returns a dictionary.
+    Raises a clear error if no JSON is found.
+    """
+
+    # Look for ```json ... ```
+    json_match = re.search(r"```json(.*?)```", text, re.DOTALL)
+
+    if not json_match:
+        raise ValueError("No JSON block found in LLM output")
+
+    json_str = json_match.group(1).strip()
+
+    try:
+        return json.loads(json_str)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"JSON parsing failed: {e}\nExtracted JSON:\n{json_str}")
+    
+
+def extract_rationale(text: str) -> str:
+    """
+    Extracts the rationale section from the LLM output if present.
+    Returns an empty string if not found.
+    """
+
+    match = re.search(r"\*\*Narrative:\*\*(.*)", text, re.DOTALL)
+    if match:
+        return match.group(1).strip()
+
+    # Fallback: everything AFTER the JSON block
+    parts = text.split("```")  # split at codefences
+    if len(parts) > 2:
+        return parts[-1].strip()
+
+    return ""

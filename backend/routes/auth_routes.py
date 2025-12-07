@@ -6,8 +6,8 @@ import bcrypt
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
 # Supabase client
-supabaseUrl = 'https://orxufngqjlljmrahvmgt.supabase.co'
-supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9yeHVmbmdxamxsam1yYWh2bWd0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MzAyOTkwOCwiZXhwIjoyMDc4NjA1OTA4fQ.oK87M171H-kbhdBGSEZcBBGVpypjbphuqNf5p82stSw'
+supabaseUrl = 'https://xbqubafoxtqfvnvgsaod.supabase.co'
+supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhicXViYWZveHRxZnZudmdzYW9kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ5MjcwNDUsImV4cCI6MjA4MDUwMzA0NX0.0gODUNUIonqOmGoc6GoSlPchvxoDSbDr0c0p1Xcssds"
 supabase = create_client(supabaseUrl, supabaseKey)
 
 
@@ -37,10 +37,10 @@ async def signup(request: SignupRequest):
         
         # Insert new user
         user_data = {
-            "email": request.email,
-            "password": hashed_password.decode('utf-8'),
-            "name": request.name,
-            "role": request.role
+        "email": request.email,
+        "password_hash": hashed_password.decode('utf-8'),
+        "name": request.name,
+        "role": request.role
         }
         
         result = supabase.table("users").insert(user_data).execute()
@@ -75,7 +75,7 @@ async def login(request: LoginRequest):
         user = user_result.data[0]
         
         # Verify password
-        if not bcrypt.checkpw(request.password.encode('utf-8'), user["password"].encode('utf-8')):
+        if not bcrypt.checkpw(request.password.encode('utf-8'), user["password_hash"].encode('utf-8')):
             raise HTTPException(status_code=401, detail="Invalid email or password")
         
         return {

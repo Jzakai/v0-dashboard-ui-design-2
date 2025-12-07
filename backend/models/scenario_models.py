@@ -13,8 +13,11 @@ class SaveScenarioRequest(BaseModel):
     skill: str
     skill_category: str
     difficulty: str
-    version: int
+    course_name: str | None = None
+    rationale: str | None = None
+    status: str | None = "draft"
     edits: Dict | None = None
+
 
 
 class EditScenarioRequest(BaseModel):

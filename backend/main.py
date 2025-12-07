@@ -24,8 +24,8 @@ app.include_router(scenario_router)
 app.include_router(assignment_router)
 app.include_router(auth_router)
 
-supabaseUrl = 'https://orxufngqjlljmrahvmgt.supabase.co'
-supabaseKey ='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9yeHVmbmdxamxsam1yYWh2bWd0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MzAyOTkwOCwiZXhwIjoyMDc4NjA1OTA4fQ.oK87M171H-kbhdBGSEZcBBGVpypjbphuqNf5p82stSw'
+supabaseUrl = 'https://xbqubafoxtqfvnvgsaod.supabase.co'
+supabaseKey ='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhicXViYWZveHRxZnZudmdzYW9kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ5MjcwNDUsImV4cCI6MjA4MDUwMzA0NX0.0gODUNUIonqOmGoc6GoSlPchvxoDSbDr0c0p1Xcssds'
 
 
 
