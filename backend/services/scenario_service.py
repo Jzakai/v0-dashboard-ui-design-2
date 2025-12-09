@@ -69,7 +69,8 @@ def orchestrate_save_scenario(req):
         skill_category=req.skill_category,
         difficulty=req.difficulty,
         course_name=req.course_name,
-        status="final"
+        status="final",
+        rationale=req.rationale
     )
 
     return {"status": "Saved", "scenario_id": req.scenario_id}

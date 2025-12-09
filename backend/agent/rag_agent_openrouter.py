@@ -93,15 +93,44 @@ def generate_scenario_from_agent(skill_category: str, skill: str, difficulty: st
             B. A detailed ScenarioSpec JSON with the following structure:
 
             {{
-                "environment": "...",
-                "skill_category": "...",
-                "skill": "...",
-                "difficulty": "...",
-                "casualties": [...],
-                "injects": [...],
-                "objectives": [...],
-                "expected_actions": [...],
-                "evaluation_metrics": [...]
+                "environment": {{
+                    "location": "",
+                    "terrain": "",
+                    "weather": ""
+                }},
+                "skill_category": "",
+                "skill": "",
+                "difficulty": "",
+                "casualties": [
+                    {{
+                        "name": "",
+                        "injuries": [""],
+                        "status": ""
+                    }}
+                ],
+                "injects": [
+                    {{
+                        "type": "",
+                        "location": ""
+                    }}
+                ],
+                "objectives": [
+                    {{
+                        "description": ""
+                    }}
+                ],
+                "expected_actions": [
+                    {{
+                        "action": "",
+                        "justification": ""
+                    }}
+                ],
+                "evaluation_metrics": [
+                    {{
+                        "metric": "",
+                        "target": ""
+                    }}
+                ]
             }}
 
         RULES:
@@ -109,6 +138,12 @@ def generate_scenario_from_agent(skill_category: str, skill: str, difficulty: st
         - Do NOT hallucinate medical steps not in doctrine.
         - Every medical action must be justified using retrieved doctrine.
         - JSON must be valid, strict, and conform to schema.
+
+        DIFFICULTY RULES:
+        - Easy: 1 casualty, 1 inject, 2–3 expected_actions.
+        - Medium: 1 to 2 casualties, 1 to 2 injects, 3 to 5 expected_actions.
+        - Hard: 2 to 3 casualties, 2 injects, 4 to 6 expected_actions.
+
 
         Your tone must be factual, concise, and militarily accurate.
     """)
@@ -147,9 +182,13 @@ def generate_scenario_from_agent(skill_category: str, skill: str, difficulty: st
     scenario_spec = extract_json_from_llm_output(llm_output)
     rationale_text = extract_rationale(llm_output)
 
+    print(llm_output)
+    print("")
     print(scenario_spec)
+    print("")
+    print(rationale_text)
 
-    
+
     return {
         "scenario_spec": scenario_spec,
         "rationale": rationale_text
@@ -229,17 +268,33 @@ def extract_json_from_llm_output(text: str) -> dict:
 
 def extract_rationale(text: str) -> str:
     """
-    Extracts the rationale section from the LLM output if present.
-    Returns an empty string if not found.
+    Extract only the Mission Narrative section.
+    Stops BEFORE the ScenarioSpec JSON block.
     """
 
-    match = re.search(r"\*\*Narrative:\*\*(.*)", text, re.DOTALL)
-    if match:
-        return match.group(1).strip()
+    # Step 1 — Find where Mission Narrative begins
+    start = re.search(
+        r"(?:\*\*)?(Mission Narrative|Narrative)(?:\*\*)?",
+        text,
+        re.IGNORECASE
+    )
+    if not start:
+        return ""
 
-    # Fallback: everything AFTER the JSON block
-    parts = text.split("```")  # split at codefences
-    if len(parts) > 2:
-        return parts[-1].strip()
+    start_index = start.end()
 
-    return ""
+    # Step 2 — Find where ScenarioSpec JSON begins
+    end = re.search(
+        r"(?:\*\*)?ScenarioSpec JSON(?:\*\*)?",
+        text,
+        re.IGNORECASE
+    )
+
+    if end:
+        end_index = end.start()
+        rationale = text[start_index:end_index]
+    else:
+        # No section header → stop at first JSON block
+        rationale = text[start_index:].split("```json")[0]
+
+    return rationale.strip()

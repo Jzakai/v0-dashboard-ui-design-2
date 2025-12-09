@@ -1,9 +1,11 @@
+
 "use client"
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Plus, Trash2, ChevronDown, ChevronUp } from "lucide-react"
+import { Rationale } from "next/font/google"
 
 interface AdminCreateCourseProps {
   onPublish?: () => void
@@ -157,6 +159,11 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
     console.log("[v0] Admin: Save scenario request")
     setIsSaving(true)
 
+    if (!courseName || courseName.trim() === "") {
+    alert("Course Name cannot be empty.");
+    return; // stop the save
+  }
+
     try {
       const response = await fetch("http://localhost:8000/scenario/save_scenario", {
         method: "POST",
@@ -171,6 +178,7 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
       skill_category: skillCategory,
       difficulty: difficulty,
       course_name: courseName,
+      rationale: generatedScenario?.rationale
     }),
       })
 
@@ -185,9 +193,9 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
       setIsSaving(false)
       alert("✓ Scenario saved and published successfully!\n\nThe course is now available for assignment to trainees.")
 
-      if (onPublish) {
-        onPublish()
-      }
+      //if (onPublish) {
+      //  onPublish()
+      //}
     } catch (error) {
       console.error("[v0] Error saving scenario:", error)
       setIsSaving(false)
