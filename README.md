@@ -1,30 +1,31 @@
-# Dashboard UI design (2)
-
-*Automatically synced with your [v0.app](https://v0.app) deployments*
-
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/janazakai-3680s-projects/v0-dashboard-ui-design)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.app-black?style=for-the-badge)](https://v0.app/chat/rh4LvjQV82g)
+# Tactex: AI-driven Tactical Medical Training System Using VR
 
 ## Overview
+Tactex an AI-powered Virtual Reality (VR) training platform designed for  combat medics. The system leverages VR to immerse trainees in highly realistic medical emergency scenarios, while AI dynamically generates and adapts these scenarios based on trainee performance. Unlike conventional training, which relies on mannequins or static simulations, this system provides interactive, customizable, and scalable experiences that can better prepare medical personnel for unpredictable real-world conditions. By integrating VR and AI, the platform seeks to bridge the gap between classroom knowledge and field application, ultimately enhancing decision-making, accuracy, and response times in high-pressure environments.
 
-This repository will stay in sync with your deployed chats on [v0.app](https://v0.app).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.app](https://v0.app).
+## installation steps
 
-## Deployment
+1. clone repository
+```bash
+git clone https://github.com/<your-repo>.git
+```
+2. open VS code and go to Integration branch
+3. open VS code terminal and paste this command to install the requirments
+```bash
+pip install -r requirements.txt
+```
+5. create .env file
+```bash
+   touch .env
+```
+6. add the api keys to the .env file (sent privately)
 
-Your project is live at:
-
-**[https://vercel.com/janazakai-3680s-projects/v0-dashboard-ui-design](https://vercel.com/janazakai-3680s-projects/v0-dashboard-ui-design)**
-
-## Build your app
-
-Continue building your app on:
-
-**[https://v0.app/chat/rh4LvjQV82g](https://v0.app/chat/rh4LvjQV82g)**
-
-## How It Works
-
-1. Create and modify your project using [v0.app](https://v0.app)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+7. navigate to backend folder from the terminal to run the fastAPI
+```bash
+cd backend
+uvicorn main:app --reload --reload-dir . --port 8000
+```
+8. keep the previous terminal and open a new terminal in the VS code to run the frontend via the following command
+```bash
+pnpm dev
+```
