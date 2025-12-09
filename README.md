@@ -7,7 +7,7 @@ Tactex an AI-powered Virtual Reality (VR) training platform designed for  combat
 
 1. clone repository
 ```bash
-git clone https://github.com/https://github.com/Jzakai/v0-dashboard-ui-design-2.git
+git clone https://github.com/Jzakai/v0-dashboard-ui-design-2.git
 ```
 2. open VS code and go to Integration branch
 3. open VS code terminal and paste this command to install the requirments
