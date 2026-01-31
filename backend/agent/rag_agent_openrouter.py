@@ -15,7 +15,7 @@ from langchain.schema.runnable import RunnableMap
 
 
 load_dotenv()
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY") #get api key
 
 
 # 1) Embeddings (FREE, LOCAL)
