@@ -1,192 +1,277 @@
 "use client"
 
+import { useEffect, useMemo, useState } from "react"
+import { flushSync } from "react-dom"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { useState } from "react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { listAssignmentsForTrainee, listUsers, type TraineeAssignmentItem, type User } from "@/lib/training-store"
 
-const courses = [
-  {
-    id: 1,
-    title: "Hemorrhage Control – Urban",
-    description: "Apply MARCH protocol to manage casualty with severe limb bleeding in urban combat environment.",
-    skillCategory: "Hemorrhage Control",
-    protocol: "MARCH",
-    difficulty: "Medium",
-    status: "Not Started",
-    dueDate: "2025-01-25",
-    assignedDate: "2025-01-10",
-    timeLimit: "5 min",
-  },
-  {
-    id: 2,
-    title: "Chest Injury Response",
-    description: "Respond to penetrating chest wound using rapid intervention techniques per TCCC guidelines.",
-    skillCategory: "Chest Trauma",
-    protocol: "MARCH",
-    difficulty: "Hard",
-    status: "In Progress",
-    dueDate: "2025-01-28",
-    assignedDate: "2025-01-08",
-    timeLimit: "4 min",
-  },
-  {
-    id: 3,
-    title: "Mass Casualty Triage",
-    description: "Triage and prioritize multiple casualties in high-pressure combat scenario.",
-    skillCategory: "Mass Casualty",
-    protocol: "START Triage",
-    difficulty: "Hard",
-    status: "Not Started",
-    dueDate: "2025-02-05",
-    assignedDate: "2025-01-12",
-    timeLimit: "10 min",
-  },
-]
+function formatDate(iso: string) {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return iso
+  return d.toLocaleDateString()
+}
 
 export function TraineeMyTrainings() {
-  const [launchingCourse, setLaunchingCourse] = useState<number | null>(null)
+  const [trainees, setTrainees] = useState<User[]>([])
+  const [selectedTraineeId, setSelectedTraineeId] = useState<string>("")
 
-  const handleLaunchVR = (courseId: number, courseTitle: string) => {
-    console.log("[v0] Trainee: Select VR training")
-    console.log("[v0] Course ID:", courseId)
-    setLaunchingCourse(courseId)
+  const [items, setItems] = useState<TraineeAssignmentItem[]>([])
+  const [isLoadingUsers, setIsLoadingUsers] = useState(true)
+  const [isLoadingAssignments, setIsLoadingAssignments] = useState(false)
+  const [loadError, setLoadError] = useState<string | null>(null)
 
-    // Simulate OpenXR initialization sequence
-    setTimeout(() => {
-      console.log("[v0] System: Checking VR device compatibility")
-      setTimeout(() => {
-        console.log("[v0] System: Launching OpenXR runtime")
-        setTimeout(() => {
-          console.log("[v0] System: Loading course assets")
-          setTimeout(() => {
-            console.log("[v0] System: VR session started")
-            setLaunchingCourse(null)
-            alert(
-              `VR Training Launched: "${courseTitle}"\n\n` +
-                `✓ OpenXR runtime initialized\n` +
-                `✓ Course assets loaded\n` +
-                `✓ VR session active\n\n` +
-                `Put on your VR headset to begin training.`,
-            )
-          }, 1000)
-        }, 1000)
-      }, 1000)
-    }, 1000)
+  const [launchingAssignmentId, setLaunchingAssignmentId] = useState<string | null>(null)
+  const [detailsOpen, setDetailsOpen] = useState(false)
+  const [detailsItem, setDetailsItem] = useState<TraineeAssignmentItem | null>(null)
+
+  const selectedTrainee = useMemo(
+    () => trainees.find((t) => t.user_id === selectedTraineeId) ?? null,
+    [selectedTraineeId, trainees],
+  )
+
+  const loadUsers = async () => {
+    setIsLoadingUsers(true)
+    setLoadError(null)
+    try {
+      const users = await listUsers()
+      setTrainees(users)
+      setSelectedTraineeId((prev) => prev || users[0]?.user_id || "")
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Failed to load trainees."
+      setLoadError(message)
+    } finally {
+      setIsLoadingUsers(false)
+    }
+  }
+
+  const loadAssignments = async (traineeId: string) => {
+    if (!traineeId) return
+    setIsLoadingAssignments(true)
+    setLoadError(null)
+    try {
+      const rows = await listAssignmentsForTrainee(traineeId)
+      setItems(rows)
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Failed to load assignments."
+      setLoadError(message)
+    } finally {
+      setIsLoadingAssignments(false)
+    }
+  }
+
+  useEffect(() => {
+    void loadUsers()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    if (!selectedTraineeId) return
+    void loadAssignments(selectedTraineeId)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTraineeId])
+
+  const handleLaunchVR = (assignmentId: string, courseTitle: string) => {
+    flushSync(() => setLaunchingAssignmentId(assignmentId))
+    alert(
+      `VR Training Launched: "${courseTitle}"\n\n` +
+        `✓ OpenXR runtime initialized\n` +
+        `✓ Course assets loaded\n` +
+        `✓ VR session active\n\n` +
+        `Put on your VR headset to begin training.`,
+    )
+    setLaunchingAssignmentId(null)
+  }
+
+  const openDetails = (item: TraineeAssignmentItem) => {
+    setDetailsItem(item)
+    setDetailsOpen(true)
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">My Trainings</h1>
+        <h1 className="text-2xl font-bold text-foreground sm:text-3xl">My Trainings</h1>
         <p className="text-muted-foreground">VR courses assigned to you via OpenXR</p>
       </div>
 
+      <Card>
+        <CardHeader>
+          <CardTitle>Choose trainee</CardTitle>
+          <CardDescription>Select the trainee record to view assigned trainings</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {loadError && (
+            <div className="flex flex-col gap-2 text-sm text-destructive sm:flex-row sm:flex-wrap sm:items-center">
+              <span className="min-w-0">{loadError}</span>
+              <button
+                type="button"
+                className="min-h-11 shrink-0 rounded-md px-3 text-sm font-medium text-primary underline-offset-4 hover:underline"
+                onClick={() => void loadUsers()}
+              >
+                Retry
+              </button>
+            </div>
+          )}
+          <select
+            value={selectedTraineeId}
+            onChange={(e) => setSelectedTraineeId(e.target.value)}
+            disabled={isLoadingUsers || isLoadingAssignments}
+            className="min-h-11 w-full rounded-md border border-border bg-input px-4 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+          >
+            <option value="">{isLoadingUsers ? "Loading trainees…" : "Select trainee"}</option>
+            {trainees.map((t) => (
+              <option key={t.user_id} value={t.user_id}>
+                {t.name}
+              </option>
+            ))}
+          </select>
+
+          {selectedTrainee && (
+            <div className="text-xs text-muted-foreground">
+              Showing assignments for <span className="text-foreground font-medium">{selectedTrainee.name}</span>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       <div className="grid grid-cols-1 gap-6">
-        {courses.map((course) => (
-          <Card key={course.id} className="hover:shadow-lg transition-shadow">
-            <CardContent className="pt-6">
-              <div className="space-y-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-foreground">{course.title}</h3>
-                    <p className="text-sm text-muted-foreground mt-1">{course.description}</p>
-                  </div>
-                  <div
-                    className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      course.status === "Not Started"
-                        ? "bg-muted text-muted-foreground"
-                        : course.status === "In Progress"
-                          ? "bg-accent/20 text-accent"
-                          : "bg-primary/20 text-primary"
-                    }`}
-                  >
-                    {course.status}
-                  </div>
-                </div>
-
-                <div className="flex gap-2 flex-wrap">
-                  <span className="px-3 py-1 rounded-full bg-primary/20 text-primary text-xs font-medium">
-                    {course.skillCategory}
-                  </span>
-                  <span className="px-3 py-1 rounded-full bg-accent/20 text-accent text-xs font-medium">
-                    {course.protocol}
-                  </span>
-                  <span className="px-3 py-1 rounded-full bg-muted text-muted-foreground text-xs font-medium">
-                    {course.difficulty}
-                  </span>
-                  <span className="px-3 py-1 rounded-full bg-muted text-muted-foreground text-xs font-medium">
-                    {course.timeLimit}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-muted-foreground">Assigned: </span>
-                    <span className="text-foreground font-medium">{course.assignedDate}</span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Due: </span>
-                    <span className="text-foreground font-medium">{course.dueDate}</span>
-                  </div>
-                </div>
-
-                {launchingCourse === course.id && (
-                  <div className="bg-primary/10 border border-primary/30 rounded-md p-3">
-                    <div className="flex items-center gap-3">
-                      <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
-                      <div className="space-y-0.5">
-                        <p className="text-sm font-medium text-foreground">Initializing VR...</p>
-                        <p className="text-xs text-muted-foreground">Checking device and loading assets</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex gap-3 pt-2">
-                  <Button
-                    onClick={() => handleLaunchVR(course.id, course.title)}
-                    disabled={launchingCourse !== null}
-                    className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground flex items-center justify-center gap-2"
-                  >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    {launchingCourse === course.id ? "Launching..." : "Launch VR Training"}
-                  </Button>
-                  <Button variant="outline" className="flex items-center gap-2 bg-transparent">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                      />
-                    </svg>
-                    View Details
-                  </Button>
-                </div>
-              </div>
+        {isLoadingAssignments ? (
+          <Card>
+            <CardContent className="pt-6 text-sm text-muted-foreground">Loading assignments…</CardContent>
+          </Card>
+        ) : !selectedTraineeId ? (
+          <Card>
+            <CardContent className="pt-6 text-sm text-muted-foreground">
+              Select a trainee to view assigned trainings.
             </CardContent>
           </Card>
-        ))}
+        ) : items.length === 0 ? (
+          <Card>
+            <CardContent className="pt-6 text-sm text-muted-foreground">No trainings assigned yet.</CardContent>
+          </Card>
+        ) : (
+          items.map((item) => {
+            const status = item.assignment.status
+            const badgeClass =
+              status === "Not Started"
+                ? "bg-muted text-muted-foreground"
+                : status === "In Progress"
+                  ? "bg-accent/20 text-accent"
+                  : "bg-primary/20 text-primary"
+
+            return (
+              <Card key={item.assignment.assignment_id} className="hover:shadow-lg transition-shadow">
+                <CardContent className="pt-6">
+                  <div className="space-y-4">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-lg font-semibold text-foreground">{item.scenario.course_name}</h3>
+                        <p className="mt-1 text-sm text-muted-foreground">Assigned {formatDate(item.assignment.assigned_at)}</p>
+                      </div>
+                      <div className={`shrink-0 self-start rounded-full px-3 py-1 text-xs font-medium ${badgeClass}`}>{status}</div>
+                    </div>
+
+                    {launchingAssignmentId === item.assignment.assignment_id && (
+                      <div className="bg-primary/10 border border-primary/30 rounded-md p-3">
+                        <div className="flex items-center gap-3">
+                          <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
+                          <div className="space-y-0.5">
+                            <p className="text-sm font-medium text-foreground">Launching VR…</p>
+                            <p className="text-xs text-muted-foreground">Handing off to OpenXR runtime</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex flex-col gap-3 pt-2 sm:flex-row">
+                      <Button
+                        onClick={() => handleLaunchVR(item.assignment.assignment_id, item.scenario.course_name)}
+                        disabled={launchingAssignmentId !== null}
+                        className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground flex items-center justify-center gap-2"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                        {launchingAssignmentId === item.assignment.assignment_id ? "Launching..." : "Launch VR Training"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => openDetails(item)}
+                        className="flex items-center justify-center gap-2 bg-transparent sm:w-auto"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                          />
+                        </svg>
+                        View Details
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })
+        )}
       </div>
+
+      <Dialog
+        open={detailsOpen}
+        onOpenChange={(open) => {
+          setDetailsOpen(open)
+          if (!open) setDetailsItem(null)
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{detailsItem?.scenario.course_name ?? "Course details"}</DialogTitle>
+            <DialogDescription>Assignment details for this course.</DialogDescription>
+          </DialogHeader>
+
+          {detailsItem && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-sm text-muted-foreground">Status</span>
+                <span className="text-sm font-medium text-foreground">{detailsItem.assignment.status}</span>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-sm text-muted-foreground">Assigned</span>
+                <span className="text-sm font-medium text-foreground">
+                  {formatDate(detailsItem.assignment.assigned_at)}
+                </span>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDetailsOpen(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Card className="bg-muted/50">
         <CardContent className="pt-6">

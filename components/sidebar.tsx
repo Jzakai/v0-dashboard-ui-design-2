@@ -2,15 +2,19 @@
 
 import { useState } from "react"
 import { cn } from "@/lib/utils"
-import { Plus, Users, BarChart3, Target, LogOut } from "lucide-react"
+import { Plus, Users, BarChart3, Target, LogOut, X } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 interface SidebarProps {
   userRole: "admin" | "trainee"
+  userName?: string
   onLogout: () => void
   onNavigate: (page: string) => void
+  mobileOpen?: boolean
+  onMobileClose?: () => void
 }
 
-export function Sidebar({ userRole, onLogout, onNavigate }: SidebarProps) {
+export function Sidebar({ userRole, userName, onLogout, onNavigate, mobileOpen, onMobileClose }: SidebarProps) {
   const [activeItem, setActiveItem] = useState(userRole === "admin" ? "create-course" : "my-trainings")
 
   const adminItems = [
@@ -32,29 +36,53 @@ export function Sidebar({ userRole, onLogout, onNavigate }: SidebarProps) {
   }
 
   return (
-    <aside className="w-72 bg-sidebar border-r border-sidebar-border h-screen flex flex-col fixed left-0 top-0 shadow-xl">
+    <aside
+      id="app-sidebar"
+      className={cn(
+        "fixed left-0 top-0 z-50 flex h-dvh w-72 max-w-[85vw] flex-col border-r border-sidebar-border bg-sidebar shadow-xl transition-transform duration-200 ease-out",
+        mobileOpen ? "translate-x-0" : "-translate-x-full",
+        "lg:translate-x-0",
+      )}
+    >
       {/* Logo & Brand */}
-      <div className="p-6 border-b border-sidebar-border bg-gradient-to-r from-primary/10 to-accent/10">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-md">
-            <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-              />
-            </svg>
+      <div className="border-b border-sidebar-border bg-gradient-to-r from-primary/10 to-accent/10 p-4 sm:p-6">
+        <div className="mb-2 flex items-start justify-between gap-2">
+          <div className="flex min-w-0 flex-1 items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-accent shadow-md">
+              <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                />
+              </svg>
+            </div>
+            <div className="min-w-0">
+              <h1 className="text-lg font-bold text-sidebar-foreground">Tactex</h1>
+              <p className="text-xs text-muted-foreground capitalize">{userRole} Portal</p>
+              {userName ? (
+                <p className="mt-0.5 truncate text-xs font-medium text-sidebar-foreground/90">{userName}</p>
+              ) : null}
+            </div>
           </div>
-          <div>
-            <h1 className="text-lg font-bold text-sidebar-foreground">Tactex</h1>
-            <p className="text-xs text-muted-foreground capitalize">{userRole} Portal</p>
-          </div>
+          {onMobileClose ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="shrink-0 lg:hidden"
+              aria-label="Close sidebar"
+              onClick={onMobileClose}
+            >
+              <X className="size-5" />
+            </Button>
+          ) : null}
         </div>
       </div>
 
       {/* Navigation Items */}
-      <nav className="flex-1 overflow-y-auto p-4 space-y-1">
+      <nav className="flex-1 space-y-1 overflow-y-auto overscroll-contain p-3 sm:p-4">
         {items.map((item) => {
           const IconComponent = item.icon
           return (
@@ -62,7 +90,7 @@ export function Sidebar({ userRole, onLogout, onNavigate }: SidebarProps) {
               key={item.id}
               onClick={() => handleClick(item.id)}
               className={cn(
-                "w-full flex items-start gap-4 px-4 py-3.5 rounded-xl transition-all group",
+                "group flex w-full min-h-11 items-start gap-4 rounded-xl px-4 py-3.5 text-left transition-all active:bg-sidebar-accent/15",
                 activeItem === item.id
                   ? "bg-gradient-to-r from-primary to-accent text-white shadow-lg shadow-primary/20"
                   : "text-sidebar-foreground hover:bg-sidebar-accent/10 hover:text-sidebar-foreground",
@@ -90,10 +118,11 @@ export function Sidebar({ userRole, onLogout, onNavigate }: SidebarProps) {
       </nav>
 
       {/* User Info & Logout */}
-      <div className="p-4 border-t border-sidebar-border bg-sidebar-accent/5">
+      <div className="border-t border-sidebar-border bg-sidebar-accent/5 p-3 sm:p-4">
         <button
+          type="button"
           onClick={onLogout}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sidebar-foreground hover:bg-destructive/10 hover:text-destructive transition-all"
+          className="flex min-h-11 w-full items-center gap-3 rounded-xl px-4 py-3 text-sidebar-foreground transition-all hover:bg-destructive/10 hover:text-destructive active:bg-destructive/15"
         >
           <LogOut className="w-5 h-5" />
           <span className="text-sm font-semibold">Sign Out</span>

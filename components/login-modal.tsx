@@ -86,26 +86,26 @@ export function LoginModal({ onLogin }: LoginModalProps) {
   }
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-background via-background to-primary/5 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-gradient-to-br from-background via-background to-primary/5 p-4 py-8 sm:p-6">
       <div className="w-full max-w-md">
-        <div className="bg-card border border-border rounded-2xl shadow-2xl overflow-hidden">
-          <div className="relative bg-gradient-to-r from-[#1b7f5b] to-[#b11414] p-8 text-center">
+        <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
+          <div className="relative bg-gradient-to-r from-[#1b7f5b] to-[#b11414] p-6 text-center sm:p-8">
             <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAwIDEwIEwgNDAgMTAgTSAxMCAwIEwgMTAgNDAgTSAwIDIwIEwgNDAgMjAgTSAyMCAwIEwgMjAgNDAgTSAwIDMwIEwgNDAgMzAgTSAzMCAwIEwgMzAgNDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2Q5ZDlkOSIgc3Ryb2tlLW9wYWNpdHk9IjAuMDUiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-30"></div>
             <div className="relative">
-              <div className="w-40 h-40 mx-auto mb-4 flex items-center justify-center">
+              <div className="mx-auto mb-4 flex h-32 w-32 items-center justify-center sm:h-40 sm:w-40">
                 <img
                   src="/images/riyadh-20air-20template.png"
                   alt="Tactex Logo"
                   className="w-full h-full object-contain"
                 />
               </div>
-              <h1 className="text-2xl font-bold text-white mb-2">TACTEX</h1>
-              <p className="text-white/80 text-sm">AI-driven Tactical Medical Training System Using VR</p>
+              <h1 className="mb-2 text-xl font-bold text-white sm:text-2xl">TACTEX</h1>
+              <p className="text-sm text-white/80">AI-driven Tactical Medical Training System Using VR</p>
             </div>
           </div>
 
           {/* Form Content */}
-          <form onSubmit={isSignUp ? handleSignUp : handleLogin} className="p-8 space-y-5">
+          <form onSubmit={isSignUp ? handleSignUp : handleLogin} className="space-y-5 p-5 sm:p-8">
             {isSignUp && (
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-card-foreground block">Full Name</label>
@@ -114,7 +114,7 @@ export function LoginModal({ onLogin }: LoginModalProps) {
                   placeholder="Enter your full name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-input text-card-foreground placeholder:text-muted-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  className="min-h-11 w-full rounded-xl border border-border bg-input px-4 py-3 text-card-foreground transition-all placeholder:text-muted-foreground focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary"
                   required={isSignUp}
                 />
               </div>
@@ -127,7 +127,7 @@ export function LoginModal({ onLogin }: LoginModalProps) {
                 placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-input text-card-foreground placeholder:text-muted-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                className="min-h-11 w-full rounded-xl border border-border bg-input px-4 py-3 text-card-foreground transition-all placeholder:text-muted-foreground focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary"
                 required
               />
             </div>
@@ -139,7 +139,7 @@ export function LoginModal({ onLogin }: LoginModalProps) {
                 placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-input text-card-foreground placeholder:text-muted-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                className="min-h-11 w-full rounded-xl border border-border bg-input px-4 py-3 text-card-foreground transition-all placeholder:text-muted-foreground focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary"
                 required
               />
             </div>
@@ -152,7 +152,7 @@ export function LoginModal({ onLogin }: LoginModalProps) {
                   placeholder="Re-enter your password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-input text-card-foreground placeholder:text-muted-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                  className="min-h-11 w-full rounded-xl border border-border bg-input px-4 py-3 text-card-foreground transition-all placeholder:text-muted-foreground focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary"
                   required={isSignUp}
                 />
               </div>
@@ -163,7 +163,7 @@ export function LoginModal({ onLogin }: LoginModalProps) {
               <select
                 value={role}
                 onChange={(e) => setRole(e.target.value as "admin" | "trainee")}
-                className="w-full px-4 py-3 rounded-xl bg-input text-card-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all cursor-pointer"
+                className="min-h-11 w-full cursor-pointer rounded-xl border border-border bg-input px-4 py-3 text-card-foreground transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="admin">Administrator</option>
                 <option value="trainee">Trainee</option>
@@ -179,7 +179,7 @@ export function LoginModal({ onLogin }: LoginModalProps) {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-[#1b7f5b] to-[#b11414] hover:from-[#1b7f5b]/90 hover:to-[#b11414]/90 text-white font-semibold py-6 rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="min-h-12 w-full rounded-xl bg-gradient-to-r from-[#1b7f5b] to-[#b11414] py-6 font-semibold text-white shadow-lg transition-all hover:from-[#1b7f5b]/90 hover:to-[#b11414]/90 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading ? (isSignUp ? "Creating Account..." : "Signing In...") : isSignUp ? "Create Account" : "Sign In"}
             </Button>
@@ -198,7 +198,7 @@ export function LoginModal({ onLogin }: LoginModalProps) {
                   setPassword("")
                   setConfirmPassword("")
                 }}
-                className="text-base font-semibold text-primary hover:text-primary/80 underline transition-colors"
+                className="min-h-11 w-full rounded-lg text-base font-semibold text-primary underline transition-colors hover:text-primary/80 sm:min-h-0 sm:w-auto"
               >
                 {isSignUp ? "Sign In" : "Sign Up"}
               </button>

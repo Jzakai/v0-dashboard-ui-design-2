@@ -1,8 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const sessionsData = [
   { trainee: 'John Smith', score: '95%', duration: '8m 32s', errors: 0, date: '2025-01-15' },
@@ -20,7 +19,7 @@ export function AdminAARAnalytics() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">After-Action Review (AAR) Analytics</h1>
+        <h1 className="text-2xl font-bold text-foreground sm:text-3xl">After-Action Review (AAR) Analytics</h1>
         <p className="text-muted-foreground">Performance metrics by course and trainee</p>
       </div>
 
@@ -30,13 +29,13 @@ export function AdminAARAnalytics() {
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Filters */}
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">Course</label>
               <select
                 value={selectedCourse}
                 onChange={(e) => setSelectedCourse(e.target.value)}
-                className="w-full px-4 py-2 rounded-md bg-input text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary"
+                className="min-h-11 w-full rounded-md border border-border bg-input px-4 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="">All Courses</option>
                 <option>Hemorrhage Control</option>
@@ -49,7 +48,7 @@ export function AdminAARAnalytics() {
               <select
                 value={selectedTrainee}
                 onChange={(e) => setSelectedTrainee(e.target.value)}
-                className="w-full px-4 py-2 rounded-md bg-input text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary"
+                className="min-h-11 w-full rounded-md border border-border bg-input px-4 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="">All Trainees</option>
                 <option>John Smith</option>
@@ -63,7 +62,7 @@ export function AdminAARAnalytics() {
                 type="date"
                 value={fromDate}
                 onChange={(e) => setFromDate(e.target.value)}
-                className="w-full px-4 py-2 rounded-md bg-input text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary"
+                className="min-h-11 w-full rounded-md border border-border bg-input px-4 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
             <div className="space-y-2">
@@ -72,13 +71,13 @@ export function AdminAARAnalytics() {
                 type="date"
                 value={toDate}
                 onChange={(e) => setToDate(e.target.value)}
-                className="w-full px-4 py-2 rounded-md bg-input text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary"
+                className="min-h-11 w-full rounded-md border border-border bg-input px-4 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
           </div>
 
           {/* KPI Cards */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div className="p-4 rounded-lg bg-muted">
               <p className="text-sm text-muted-foreground mb-1">Average Score</p>
               <div className="text-3xl font-bold text-foreground">82%</div>

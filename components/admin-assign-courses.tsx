@@ -1,192 +1,212 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
-
-const trainees = [
-  { id: 1, name: "John Smith", type: "Combat Medic", level: "Beginner" },
-  { id: 2, name: "Sarah Johnson", type: "Field Medic", level: "Intermediate" },
-  { id: 3, name: "Mike Davis", type: "Combat Medic", level: "Advanced" },
-  { id: 4, name: "Emily White", type: "Tactical Medic", level: "Beginner" },
-  { id: 5, name: "David Brown", type: "Field Medic", level: "Intermediate" },
-]
-
-const coursesByCategory = {
-  "Care Under Fire": {
-    "Hemorrhage control": {
-      Beginner: ["Hemorrhage Control Basics – Urban Street"],
-      Intermediate: ["Advanced Hemorrhage Control – Combat Zone"],
-      Advanced: ["Expert Hemorrhage Control – Mass Casualty"],
-    },
-    "Tourniquet application": {
-      Beginner: ["Tourniquet Application Basics – Training Ground"],
-      Intermediate: ["Advanced Tourniquet Application – Urban Combat"],
-      Advanced: ["Expert Tourniquet Application – High Threat"],
-    },
-    "Tactical movement under fire": {
-      Beginner: ["Tactical Movement Basics – Open Field"],
-      Intermediate: ["Advanced Tactical Movement – Urban Environment"],
-      Advanced: ["Expert Tactical Movement – Combat Operations"],
-    },
-  },
-  "Tactical Field Care": {
-    "Airway opening": {
-      Beginner: ["Airway Management Basics – Field Hospital"],
-      Intermediate: ["Advanced Airway Management – Tactical Field"],
-      Advanced: ["Expert Airway Management – Critical Care"],
-    },
-    "Needle-D chest decompression": {
-      Beginner: ["Needle-D Basics – Training Facility"],
-      Intermediate: ["Advanced Needle-D – Field Operations"],
-      Advanced: ["Expert Needle-D – Critical Trauma"],
-    },
-    "Wound packing": {
-      Beginner: ["Wound Packing Basics – Medical Bay"],
-      Intermediate: ["Advanced Wound Packing – Combat Field"],
-      Advanced: ["Expert Wound Packing – Severe Trauma"],
-    },
-    "Pain control": {
-      Beginner: ["Pain Management Basics – Field Care"],
-      Intermediate: ["Advanced Pain Management – Tactical Operations"],
-      Advanced: ["Expert Pain Management – Critical Scenarios"],
-    },
-  },
-  "Tactical Evacuation": {
-    "Litter carry": {
-      Beginner: ["Litter Carry Basics – Training Ground"],
-      Intermediate: ["Advanced Litter Carry – Rough Terrain"],
-      Advanced: ["Expert Litter Carry – Combat Evacuation"],
-    },
-    "Communication (MIST report)": {
-      Beginner: ["MIST Reporting Basics – Training Exercise"],
-      Intermediate: ["Advanced MIST Reporting – Field Operations"],
-      Advanced: ["Expert MIST Reporting – Multi-Casualty"],
-    },
-    "Triage decisions": {
-      Beginner: ["Triage Basics – Medical Facility"],
-      Intermediate: ["Advanced Triage – Mass Casualty Event"],
-      Advanced: ["Expert Triage – Combat Triage"],
-    },
-  },
-}
+import { Calendar } from "lucide-react"
+import { createAssignments, listScenarios, listUsers, type Scenario, type User } from "@/lib/training-store"
+import { cn } from "@/lib/utils"
 
 export function AdminAssignCourses() {
+  const UI_VERSION = "admin-assign-courses-2026-04-16-1"
   const [traineeNameFilter, setTraineeNameFilter] = useState("")
-  const [traineeTypeFilter, setTraineeTypeFilter] = useState("")
-  const [traineeLevelFilter, setTraineeLevelFilter] = useState("")
-  const [selectedTrainees, setSelectedTrainees] = useState<number[]>([])
+  const [selectedTrainees, setSelectedTrainees] = useState<string[]>([])
 
-  const [skillCategory, setSkillCategory] = useState("")
-  const [skill, setSkill] = useState("")
-  const [courseLevel, setCourseLevel] = useState("")
-  const [selectedCourse, setSelectedCourse] = useState("")
+  const [trainees, setTrainees] = useState<User[]>([])
+  const [scenarios, setScenarios] = useState<Scenario[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
 
+  const [selectedScenarioId, setSelectedScenarioId] = useState("")
   const [startDate, setStartDate] = useState("")
   const [dueDate, setDueDate] = useState("")
+  const [startDateError, setStartDateError] = useState("")
+  const [dueDateError, setDueDateError] = useState("")
   const [isAssigning, setIsAssigning] = useState(false)
 
-  const filteredTrainees = trainees.filter((trainee) => {
-    const matchesName = trainee.name.toLowerCase().includes(traineeNameFilter.toLowerCase())
-    const matchesType = traineeTypeFilter === "" || trainee.type === traineeTypeFilter
-    const matchesLevel = traineeLevelFilter === "" || trainee.level === traineeLevelFilter
-    return matchesName && matchesType && matchesLevel
-  })
+  const startDateRef = useRef<HTMLInputElement | null>(null)
+  const dueDateRef = useRef<HTMLInputElement | null>(null)
 
-  const availableSkills = skillCategory
-    ? Object.keys(coursesByCategory[skillCategory as keyof typeof coursesByCategory] || {})
-    : []
+  const hasValidationErrors = Boolean(startDateError || dueDateError)
 
-  const availableCourses =
-    skillCategory && skill && courseLevel
-      ? coursesByCategory[skillCategory as keyof typeof coursesByCategory]?.[
-          skill as keyof (typeof coursesByCategory)[keyof typeof coursesByCategory]
-        ]?.[
-          courseLevel as keyof (typeof coursesByCategory)[keyof typeof coursesByCategory][keyof (typeof coursesByCategory)[keyof typeof coursesByCategory]]
-        ] || []
-      : []
+  /** String compare on YYYY-MM-DD matches calendar order; blocks submit if values ever desync from handler state. */
+  const hasInvalidDateValues = useMemo(() => {
+    const todayIso = new Date().toISOString().split("T")[0]
+    if (startDate && startDate < todayIso) return true
+    if (dueDate && dueDate < todayIso) return true
+    if (startDate && dueDate && dueDate <= startDate) return true
+    return false
+  }, [startDate, dueDate])
 
-  const handleSkillCategoryChange = (value: string) => {
-    setSkillCategory(value)
-    setSkill("")
-    setCourseLevel("")
-    setSelectedCourse("")
+  const cannotAssignDates = hasValidationErrors || hasInvalidDateValues
+
+  const handleStartDateChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    if (!value) {
+      setStartDate("")
+      setStartDateError("")
+      return
+    }
+    const selectedDate = new Date(value)
+    const todayStart = new Date()
+    todayStart.setHours(0, 0, 0, 0)
+    selectedDate.setHours(0, 0, 0, 0)
+    if (selectedDate < todayStart) {
+      setStartDateError("Start date cannot be in the past")
+      setStartDate("")
+      return
+    }
+    setStartDateError("")
+    setStartDate(value)
+    if (dueDate && value && dueDate <= value) {
+      setDueDate("")
+      setDueDateError("Due date must be after start date")
+    } else {
+      setDueDateError("")
+    }
   }
 
-  const handleSkillChange = (value: string) => {
-    setSkill(value)
-    setCourseLevel("")
-    setSelectedCourse("")
+  const handleDueDateChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    if (!value) {
+      setDueDate("")
+      setDueDateError("")
+      return
+    }
+    const selectedDate = new Date(value)
+    const todayStart = new Date()
+    todayStart.setHours(0, 0, 0, 0)
+    selectedDate.setHours(0, 0, 0, 0)
+    if (selectedDate < todayStart) {
+      setDueDateError("Due date cannot be in the past")
+      setDueDate("")
+      return
+    }
+    if (startDate) {
+      const startD = new Date(startDate)
+      startD.setHours(0, 0, 0, 0)
+      if (selectedDate <= startD) {
+        setDueDateError("Due date must be after start date")
+        setDueDate("")
+        return
+      }
+    }
+    setDueDateError("")
+    setDueDate(value)
   }
 
-  const handleCourseLevelChange = (value: string) => {
-    setCourseLevel(value)
-    setSelectedCourse("")
+  const filteredTrainees = useMemo(() => {
+    const needle = traineeNameFilter.trim().toLowerCase()
+    if (!needle) return trainees
+    return trainees.filter((t) => t.name.toLowerCase().includes(needle))
+  }, [traineeNameFilter, trainees])
+
+  const selectedScenario = useMemo(
+    () => scenarios.find((s) => s.scenario_id === selectedScenarioId) ?? null,
+    [scenarios, selectedScenarioId],
+  )
+
+  const load = async () => {
+    setIsLoading(true)
+    setLoadError(null)
+    try {
+      const [users, scenarioRows] = await Promise.all([listUsers(), listScenarios()])
+      setTrainees(users)
+      setScenarios(scenarioRows)
+      console.log("[AdminAssignCourses] listScenarios() ->", scenarioRows)
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Failed to load trainees/courses."
+      setLoadError(message)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const toggleTrainee = (id: number) => {
-    setSelectedTrainees((prev) => (prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]))
+  useEffect(() => {
+    void load()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const toggleTrainee = (userId: string) => {
+    setSelectedTrainees((prev) => (prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]))
   }
 
-  const handleAssignCourse = () => {
-    if (selectedTrainees.length === 0 || !selectedCourse || !startDate || !dueDate) {
-      alert("Please select trainees, course, and dates before assigning.")
+  const handleAssignCourse = async () => {
+    if (selectedTrainees.length === 0 || !selectedScenarioId) {
+      alert("Please select at least one trainee and a course before assigning.")
       return
     }
 
-    console.log("[v0] Admin: Select trainees and course")
-    console.log("[v0] Selected trainees:", selectedTrainees)
-    console.log("[v0] Course:", selectedCourse)
+    if (cannotAssignDates) {
+      alert(
+        startDateError ||
+          dueDateError ||
+          (hasInvalidDateValues ? "Please correct the start and due dates before assigning." : "") ||
+          "Please fix date validation errors.",
+      )
+      return
+    }
 
     setIsAssigning(true)
+    try {
+      await createAssignments({
+        traineeIds: selectedTrainees,
+        scenarioId: selectedScenarioId,
+        status: "Not Started",
+        startDate: startDate || undefined,
+        dueDate: dueDate || undefined,
+      })
 
-    setTimeout(() => {
-      console.log("[v0] System: Assigning course to trainees")
-      console.log("[v0] System: Updating trainee records")
+      const selectedNames = trainees
+        .filter((t) => selectedTrainees.includes(t.user_id))
+        .map((t) => t.name)
+        .join(", ")
 
-      setTimeout(() => {
-        console.log("[v0] System: Sending notifications to trainees")
+      alert(
+        `✓ Course assigned successfully!\n\n` +
+          `Course: ${selectedScenario?.course_name ?? selectedScenarioId}\n` +
+          `Trainees: ${selectedNames}\n` +
+          (startDate ? `Start: ${startDate}\n` : "") +
+          (dueDate ? `Due: ${dueDate}\n` : ""),
+      )
 
-        setTimeout(() => {
-          console.log("[v0] System: Assignment complete")
-          setIsAssigning(false)
-
-          const selectedNames = trainees
-            .filter((t) => selectedTrainees.includes(t.id))
-            .map((t) => t.name)
-            .join(", ")
-
-          alert(
-            `✓ Course assigned successfully!\n\n` +
-              `Course: ${selectedCourse}\n` +
-              `Trainees: ${selectedNames}\n` +
-              `Start: ${startDate}\n` +
-              `Due: ${dueDate}\n\n` +
-              `Notifications have been sent to all selected trainees.`,
-          )
-
-          // Reset form
-          setSelectedTrainees([])
-          setSkillCategory("")
-          setSkill("")
-          setCourseLevel("")
-          setSelectedCourse("")
-          setStartDate("")
-          setDueDate("")
-        }, 1000)
-      }, 1000)
-    }, 1500)
+      setSelectedTrainees([])
+      setSelectedScenarioId("")
+      setStartDate("")
+      setDueDate("")
+      setStartDateError("")
+      setDueDateError("")
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Failed to assign course."
+      alert(`Assignment failed: ${message}`)
+    } finally {
+      setIsAssigning(false)
+    }
   }
 
   return (
-    <div className="space-y-6">
+    <div key={UI_VERSION} className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Assign Courses</h1>
+        <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Assign Courses</h1>
         <p className="text-muted-foreground">Assign VR courses to trainees with notifications</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-6">
+      {loadError && (
+        <Card className="border-destructive/40">
+          <CardHeader>
+            <CardTitle>Couldn’t load data</CardTitle>
+            <CardDescription className="text-destructive">{loadError}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={load} disabled={isLoading}>
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
         {/* Left Column - Trainee List */}
         <Card>
           <CardHeader>
@@ -202,32 +222,9 @@ export function AdminAssignCourses() {
                 placeholder="Search by name…"
                 value={traineeNameFilter}
                 onChange={(e) => setTraineeNameFilter(e.target.value)}
-                className="w-full px-4 py-2 rounded-md bg-input text-foreground placeholder:text-muted-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary"
+                disabled={isLoading || isAssigning}
+                className="min-h-11 w-full rounded-md border border-border bg-input px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               />
-
-              <div className="grid grid-cols-2 gap-3">
-                <select
-                  value={traineeTypeFilter}
-                  onChange={(e) => setTraineeTypeFilter(e.target.value)}
-                  className="w-full px-4 py-2 rounded-md bg-input text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  <option value="">All Types</option>
-                  <option value="Combat Medic">Combat Medic</option>
-                  <option value="Field Medic">Field Medic</option>
-                  <option value="Tactical Medic">Tactical Medic</option>
-                </select>
-
-                <select
-                  value={traineeLevelFilter}
-                  onChange={(e) => setTraineeLevelFilter(e.target.value)}
-                  className="w-full px-4 py-2 rounded-md bg-input text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  <option value="">All Levels</option>
-                  <option value="Beginner">Beginner</option>
-                  <option value="Intermediate">Intermediate</option>
-                  <option value="Advanced">Advanced</option>
-                </select>
-              </div>
             </div>
 
             <div className="overflow-x-auto">
@@ -235,27 +232,48 @@ export function AdminAssignCourses() {
                 <thead>
                   <tr className="border-b border-border">
                     <th className="text-left py-3 px-2 font-medium text-foreground">
-                      <Checkbox />
+                      <Checkbox
+                        checked={filteredTrainees.length > 0 && selectedTrainees.length === filteredTrainees.length}
+                        onCheckedChange={(checked) => {
+                          if (!checked) {
+                            setSelectedTrainees([])
+                            return
+                          }
+                          setSelectedTrainees(filteredTrainees.map((t) => t.user_id))
+                        }}
+                        disabled={isLoading || isAssigning || filteredTrainees.length === 0}
+                      />
                     </th>
                     <th className="text-left py-3 px-2 font-medium text-foreground">Name</th>
-                    <th className="text-left py-3 px-2 font-medium text-foreground">Type</th>
-                    <th className="text-left py-3 px-2 font-medium text-foreground">Level</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredTrainees.map((trainee) => (
-                    <tr key={trainee.id} className="border-b border-border hover:bg-muted/50">
+                  {isLoading ? (
+                    <tr>
+                      <td colSpan={2} className="py-6 px-2 text-muted-foreground">
+                        Loading trainees…
+                      </td>
+                    </tr>
+                  ) : filteredTrainees.length === 0 ? (
+                    <tr>
+                      <td colSpan={2} className="py-6 px-2 text-muted-foreground">
+                        No trainees found.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredTrainees.map((trainee) => (
+                      <tr key={trainee.user_id} className="border-b border-border hover:bg-muted/50">
                       <td className="py-3 px-2">
                         <Checkbox
-                          checked={selectedTrainees.includes(trainee.id)}
-                          onCheckedChange={() => toggleTrainee(trainee.id)}
+                          checked={selectedTrainees.includes(trainee.user_id)}
+                          onCheckedChange={() => toggleTrainee(trainee.user_id)}
+                          disabled={isAssigning}
                         />
                       </td>
                       <td className="py-3 px-2 text-foreground">{trainee.name}</td>
-                      <td className="py-3 px-2 text-foreground">{trainee.type}</td>
-                      <td className="py-3 px-2 text-muted-foreground text-xs">{trainee.level}</td>
                     </tr>
-                  ))}
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -270,106 +288,112 @@ export function AdminAssignCourses() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Skill Category</label>
+              <label className="text-sm font-medium text-foreground">Course</label>
               <select
-                value={skillCategory}
-                onChange={(e) => handleSkillCategoryChange(e.target.value)}
-                disabled={isAssigning}
-                className="w-full px-4 py-2 rounded-md bg-input text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+                value={selectedScenarioId}
+                onChange={(e) => setSelectedScenarioId(e.target.value)}
+                disabled={isLoading || isAssigning}
+                className="min-h-11 w-full rounded-md border border-border bg-input px-4 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
               >
-                <option value="">Select skill category</option>
-                <option value="Care Under Fire">Care Under Fire</option>
-                <option value="Tactical Field Care">Tactical Field Care</option>
-                <option value="Tactical Evacuation">Tactical Evacuation</option>
+                <option value="">Select a course</option>
+                {scenarios.map((s) => (
+                  <option key={s.scenario_id} value={s.scenario_id}>
+                    {(s.course_name?.trim() || "Untitled Scenario")}
+                  </option>
+                ))}
               </select>
             </div>
 
-            {skillCategory && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Skill</label>
-                <select
-                  value={skill}
-                  onChange={(e) => handleSkillChange(e.target.value)}
-                  disabled={isAssigning}
-                  className="w-full px-4 py-2 rounded-md bg-input text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
-                >
-                  <option value="">Select skill</option>
-                  {availableSkills.map((skillOption) => (
-                    <option key={skillOption} value={skillOption}>
-                      {skillOption}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            {skill && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Course Level</label>
-                <select
-                  value={courseLevel}
-                  onChange={(e) => handleCourseLevelChange(e.target.value)}
-                  disabled={isAssigning}
-                  className="w-full px-4 py-2 rounded-md bg-input text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
-                >
-                  <option value="">Select level</option>
-                  <option value="Beginner">Beginner</option>
-                  <option value="Intermediate">Intermediate</option>
-                  <option value="Advanced">Advanced</option>
-                </select>
-              </div>
-            )}
-
-            {courseLevel && availableCourses.length > 0 && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Course</label>
-                <select
-                  value={selectedCourse}
-                  onChange={(e) => setSelectedCourse(e.target.value)}
-                  disabled={isAssigning}
-                  className="w-full px-4 py-2 rounded-md bg-input text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
-                >
-                  <option value="">Select a course</option>
-                  {availableCourses.map((course) => (
-                    <option key={course} value={course}>
-                      {course}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            {selectedCourse && (
-              <div className="flex gap-2">
-                <span className="px-3 py-1 rounded-full bg-primary/20 text-primary text-xs font-medium">
-                  {skillCategory}
-                </span>
-                <span className="px-3 py-1 rounded-full bg-accent/20 text-accent text-xs font-medium">
-                  {courseLevel}
-                </span>
-              </div>
-            )}
-
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">Start Date</label>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                disabled={isAssigning}
-                className="w-full px-4 py-2 rounded-md bg-input text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
-              />
+              <div className="relative">
+                <input
+                  ref={startDateRef}
+                  type="date"
+                  min={new Date().toISOString().split("T")[0]}
+                  value={startDate}
+                  onChange={handleStartDateChange}
+                  disabled={isAssigning || isLoading}
+                  aria-invalid={startDateError ? true : undefined}
+                  aria-describedby="assign-start-date-hint"
+                  className={cn(
+                    "min-h-11 w-full appearance-none rounded-md border bg-input px-4 py-2.5 pr-10 text-foreground focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 [&::-webkit-calendar-picker-indicator]:pointer-events-none [&::-webkit-calendar-picker-indicator]:opacity-0",
+                    startDateError ? "border-destructive ring-destructive/30 ring-2" : "border-border",
+                  )}
+                />
+                <button
+                  type="button"
+                  aria-label="Open start date picker"
+                  className="absolute inset-y-0 right-1 flex min-h-11 min-w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                  onClick={() => {
+                    const el = startDateRef.current
+                    if (!el) return
+                    if (typeof el.showPicker === "function") el.showPicker()
+                    else el.focus()
+                  }}
+                  disabled={isAssigning || isLoading}
+                >
+                  <Calendar className="h-4 w-4" />
+                </button>
+              </div>
+              {startDateError ? (
+                <p
+                  role="alert"
+                  aria-live="polite"
+                  className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm font-medium leading-snug text-destructive"
+                >
+                  {startDateError}
+                </p>
+              ) : null}
+              <p id="assign-start-date-hint" className="text-xs leading-relaxed text-muted-foreground">
+                Past dates are disabled
+              </p>
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">Due Date</label>
-              <input
-                type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-                disabled={isAssigning}
-                className="w-full px-4 py-2 rounded-md bg-input text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
-              />
+              <div className="relative">
+                <input
+                  ref={dueDateRef}
+                  type="date"
+                  min={startDate || new Date().toISOString().split("T")[0]}
+                  value={dueDate}
+                  onChange={handleDueDateChange}
+                  disabled={isAssigning || isLoading}
+                  aria-invalid={dueDateError ? true : undefined}
+                  aria-describedby="assign-due-date-hint"
+                  className={cn(
+                    "min-h-11 w-full appearance-none rounded-md border bg-input px-4 py-2.5 pr-10 text-foreground focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 [&::-webkit-calendar-picker-indicator]:pointer-events-none [&::-webkit-calendar-picker-indicator]:opacity-0",
+                    dueDateError ? "border-destructive ring-destructive/30 ring-2" : "border-border",
+                  )}
+                />
+                <button
+                  type="button"
+                  aria-label="Open due date picker"
+                  className="absolute inset-y-0 right-1 flex min-h-11 min-w-11 items-center justify-center rounded-md text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                  onClick={() => {
+                    const el = dueDateRef.current
+                    if (!el) return
+                    if (typeof el.showPicker === "function") el.showPicker()
+                    else el.focus()
+                  }}
+                  disabled={isAssigning || isLoading}
+                >
+                  <Calendar className="h-4 w-4" />
+                </button>
+              </div>
+              {dueDateError ? (
+                <p
+                  role="alert"
+                  aria-live="polite"
+                  className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm font-medium leading-snug text-destructive"
+                >
+                  {dueDateError}
+                </p>
+              ) : null}
+              <p id="assign-due-date-hint" className="text-xs leading-relaxed text-muted-foreground">
+                Past dates are disabled
+              </p>
             </div>
 
             {isAssigning && (
@@ -378,7 +402,7 @@ export function AdminAssignCourses() {
                   <div className="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full" />
                   <div className="space-y-1">
                     <p className="text-sm font-medium text-foreground">Assigning course...</p>
-                    <p className="text-xs text-muted-foreground">Updating records and sending notifications</p>
+                    <p className="text-xs text-muted-foreground">Creating assignments in the database</p>
                   </div>
                 </div>
               </div>
@@ -386,7 +410,13 @@ export function AdminAssignCourses() {
 
             <Button
               onClick={handleAssignCourse}
-              disabled={isAssigning || selectedTrainees.length === 0 || !selectedCourse}
+              disabled={
+                isLoading ||
+                isAssigning ||
+                cannotAssignDates ||
+                selectedTrainees.length === 0 ||
+                !selectedScenarioId
+              }
               className="w-full bg-primary hover:bg-primary/90 text-primary-foreground mt-6"
             >
               {isAssigning ? "Assigning..." : "Assign to Selected Trainees"}

@@ -20,37 +20,37 @@ export function AdminCoursesList() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Courses (Admin)</h1>
+        <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Courses (Admin)</h1>
         <p className="text-muted-foreground">Manage VR training courses</p>
       </div>
 
       {/* Courses List Card */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
+        <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
             <CardTitle>Course List</CardTitle>
           </div>
-          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
+          <Button className="w-full shrink-0 bg-primary text-primary-foreground hover:bg-primary/90 sm:w-auto">
             + New Course
           </Button>
         </CardHeader>
 
         <CardContent className="space-y-6">
           {/* Filters */}
-          <div className="flex gap-4 flex-wrap">
-            <div className="flex-1 min-w-[200px]">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-stretch sm:gap-4">
+            <div className="min-w-0 flex-1 sm:min-w-[12rem]">
               <input
                 type="text"
                 placeholder="Search by name…"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-4 py-2 rounded-md bg-input text-foreground placeholder:text-muted-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary"
+                className="min-h-11 w-full rounded-md border border-border bg-input px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
             <select
               value={difficulty}
               onChange={(e) => setDifficulty(e.target.value)}
-              className="px-4 py-2 rounded-md bg-input text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary"
+              className="min-h-11 w-full rounded-md border border-border bg-input px-4 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary sm:w-auto sm:min-w-[10rem]"
             >
               <option>All levels</option>
               <option>Easy</option>
@@ -60,7 +60,7 @@ export function AdminCoursesList() {
             <select
               value={courseType}
               onChange={(e) => setCourseType(e.target.value)}
-              className="px-4 py-2 rounded-md bg-input text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary"
+              className="min-h-11 w-full rounded-md border border-border bg-input px-4 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary sm:w-auto sm:min-w-[10rem]"
             >
               <option>All types</option>
               <option>Combat</option>
@@ -106,11 +106,19 @@ export function AdminCoursesList() {
                     </td>
                     <td className="py-3 px-4 text-muted-foreground text-xs">{course.updated}</td>
                     <td className="py-3 px-4">
-                      <div className="flex gap-2">
-                        <button className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground" title="Edit">
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+                          title="Edit"
+                        >
                           ✎
                         </button>
-                        <button className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-destructive" title="Delete">
+                        <button
+                          type="button"
+                          className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-destructive"
+                          title="Delete"
+                        >
                           🗑
                         </button>
                       </div>

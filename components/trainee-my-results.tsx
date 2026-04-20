@@ -68,7 +68,7 @@ export function TraineeMyResults() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">My Results</h1>
+        <h1 className="text-2xl font-bold text-foreground sm:text-3xl">My Results</h1>
         <p className="text-muted-foreground">After-Action Review (AAR) and performance history</p>
       </div>
 
@@ -76,13 +76,13 @@ export function TraineeMyResults() {
         {resultsData.map((result) => (
           <Card key={result.id} className="hover:shadow-lg transition-shadow">
             <CardHeader className="pb-4">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0 flex-1">
                   <CardTitle className="text-lg">{result.course}</CardTitle>
-                  <p className="text-sm text-muted-foreground mt-1">Completed on {result.date}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">Completed on {result.date}</p>
                 </div>
                 <div
-                  className={`px-4 py-2 rounded-lg font-semibold ${
+                  className={`shrink-0 self-start rounded-lg px-4 py-2 text-center text-lg font-semibold sm:self-auto ${
                     result.score >= 90
                       ? "bg-primary/20 text-primary"
                       : result.score >= 80
@@ -95,22 +95,22 @@ export function TraineeMyResults() {
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-foreground">{result.duration}</div>
+                  <div className="text-xl font-bold text-foreground sm:text-2xl">{result.duration}</div>
                   <div className="text-xs text-muted-foreground">Duration</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-foreground">{result.kpis.marchCompliance}%</div>
+                  <div className="text-xl font-bold text-foreground sm:text-2xl">{result.kpis.marchCompliance}%</div>
                   <div className="text-xs text-muted-foreground">MARCH Compliance</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-foreground">{result.kpis.decisionAccuracy}%</div>
+                  <div className="text-xl font-bold text-foreground sm:text-2xl">{result.kpis.decisionAccuracy}%</div>
                   <div className="text-xs text-muted-foreground">Decision Accuracy</div>
                 </div>
                 <div className="text-center">
                   <div
-                    className={`text-2xl font-bold ${result.criticalErrors === 0 ? "text-primary" : "text-destructive"}`}
+                    className={`text-xl font-bold sm:text-2xl ${result.criticalErrors === 0 ? "text-primary" : "text-destructive"}`}
                   >
                     {result.criticalErrors}
                   </div>
@@ -132,16 +132,23 @@ export function TraineeMyResults() {
                             .replace("Time", "")
                             .replace(/([A-Z])/g, " $1")
                             .trim()
-                          const isOnTarget = value <= target
+                          const targetNum = typeof target === "number" ? target : undefined
+                          const isOnTarget = targetNum !== undefined && value <= targetNum
 
                           return (
                             <div key={key} className="flex items-center gap-3">
-                              <div className={`w-2 h-2 rounded-full ${isOnTarget ? "bg-primary" : "bg-accent"}`}></div>
+                              <div className={`h-2 w-2 rounded-full ${isOnTarget ? "bg-primary" : "bg-accent"}`}></div>
                               <div className="flex-1 text-sm text-foreground">
                                 {label}: <span className="font-semibold">{value}s</span>
                               </div>
                               <div className="text-xs text-muted-foreground">
-                                Target: ≤{target}s {isOnTarget ? "✓" : "⚠️"}
+                                {targetNum !== undefined ? (
+                                  <>
+                                    Target: ≤{targetNum}s {isOnTarget ? "✓" : "⚠️"}
+                                  </>
+                                ) : (
+                                  "—"
+                                )}
                               </div>
                             </div>
                           )
@@ -170,13 +177,13 @@ export function TraineeMyResults() {
           <CardTitle>Filter Results</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">Course</label>
               <select
                 value={selectedCourse}
                 onChange={(e) => setSelectedCourse(e.target.value)}
-                className="w-full px-4 py-2 rounded-md bg-input text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary"
+                className="min-h-11 w-full rounded-md border border-border bg-input px-4 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="">All Courses</option>
                 <option>Hemorrhage Control – Urban</option>
@@ -190,7 +197,7 @@ export function TraineeMyResults() {
                 type="date"
                 value={fromDate}
                 onChange={(e) => setFromDate(e.target.value)}
-                className="w-full px-4 py-2 rounded-md bg-input text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary"
+                className="min-h-11 w-full rounded-md border border-border bg-input px-4 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
             <div className="space-y-2">
@@ -199,7 +206,7 @@ export function TraineeMyResults() {
                 type="date"
                 value={toDate}
                 onChange={(e) => setToDate(e.target.value)}
-                className="w-full px-4 py-2 rounded-md bg-input text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary"
+                className="min-h-11 w-full rounded-md border border-border bg-input px-4 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
           </div>

@@ -293,11 +293,11 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Create Course</h1>
+        <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Create Course</h1>
         <p className="text-muted-foreground">AI-powered scenario generation with RAG Agent</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
         {/* Left Column - Scenario Configuration */}
         <Card>
           <CardHeader>
@@ -312,7 +312,7 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
                 placeholder="e.g., Hemorrhage Control - Urban Combat"
                 value={courseName}
                 onChange={(e) => setCourseName(e.target.value)}
-                className="w-full px-4 py-2 rounded-md bg-input text-foreground placeholder:text-muted-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary"
+                className="min-h-11 w-full rounded-md border border-border bg-input px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
 
@@ -321,7 +321,7 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
               <select
                 value={skillCategory}
                 onChange={(e) => handleSkillCategoryChange(e.target.value)}
-                className="w-full px-4 py-2 rounded-md bg-input text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary"
+                className="min-h-11 w-full rounded-md border border-border bg-input px-4 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option>Care Under Fire</option>
                 <option>Tactical Field Care</option>
@@ -334,7 +334,7 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
               <select
                 value={skill}
                 onChange={(e) => setSkill(e.target.value)}
-                className="w-full px-4 py-2 rounded-md bg-input text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary"
+                className="min-h-11 w-full rounded-md border border-border bg-input px-4 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 {skillsByCategory[skillCategory]?.map((skillOption) => (
                   <option key={skillOption} value={skillOption}>
@@ -349,7 +349,7 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
               <select
                 value={difficulty}
                 onChange={(e) => setDifficulty(e.target.value)}
-                className="w-full px-4 py-2 rounded-md bg-input text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary"
+                className="min-h-11 w-full rounded-md border border-border bg-input px-4 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option>Easy</option>
                 <option>Medium</option>
@@ -357,17 +357,17 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
               </select>
             </div>
 
-            <div className="flex gap-3 pt-4">
+            <div className="flex flex-col gap-3 pt-4 sm:flex-row">
               <Button
                 onClick={handleGenerateScenario}
-                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
+                className="w-full flex-1 bg-primary text-primary-foreground hover:bg-primary/90 sm:w-auto"
                 disabled={isGenerating}
               >
                 {isGenerating ? "Generating..." : "Generate Scenario"}
               </Button>
               <Button
                 variant="outline"
-                className="flex-1 bg-transparent"
+                className="w-full flex-1 bg-transparent sm:w-auto"
                 onClick={() => {
                   setCourseName("")
                   setShowChatbot(false)
@@ -391,11 +391,11 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
             <CardContent>
               {showChatbot ? (
                 <div className="space-y-3">
-                  <div className="border border-border rounded-md bg-muted/50 p-4 h-32 overflow-y-auto space-y-3">
+                  <div className="h-36 space-y-3 overflow-y-auto rounded-md border border-border bg-muted/50 p-3 sm:h-40 sm:p-4">
                     {chatMessages.map((msg, idx) => (
                       <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                         <div
-                          className={`max-w-[90%] px-3 py-2 rounded-lg text-sm ${
+                          className={`max-w-[min(90vw,20rem)] px-3 py-2 rounded-lg text-sm sm:max-w-[85%] ${
                             msg.role === "user"
                               ? "bg-primary text-primary-foreground"
                               : "bg-background border border-border text-foreground"
@@ -445,7 +445,7 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
                 <div className="border border-border rounded-md">
                   <button
                     onClick={() => toggleSection("basic")}
-                    className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
+                    className="flex min-h-11 w-full items-center justify-between gap-2 p-3 text-left transition-colors hover:bg-muted/50"
                   >
                     <span className="font-medium text-sm">Basic Information</span>
                     {expandedSections.has("basic") ? (
@@ -465,7 +465,7 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
                           className="w-full px-3 py-1.5 text-sm rounded bg-background border border-border focus:outline-none focus:ring-2 focus:ring-primary"
                         />
                       </div>
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                         <div className="space-y-1">
                           <label className="text-xs font-medium text-muted-foreground">Skill Category</label>
                           <input
@@ -496,7 +496,7 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
                 <div className="border border-border rounded-md">
                   <button
                     onClick={() => toggleSection("casualties")}
-                    className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
+                    className="flex min-h-11 w-full items-center justify-between gap-2 p-3 text-left transition-colors hover:bg-muted/50"
                   >
                     <span className="font-medium text-sm">Casualties ({generatedScenario.casualties.length})</span>
                     {expandedSections.has("casualties") ? (
@@ -509,15 +509,15 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
                     <div className="p-3 space-y-3 border-t border-border bg-muted/20">
                       {generatedScenario.casualties.map((casualty, idx) => (
                         <div key={idx} className="border border-border rounded bg-background p-3 space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-semibold text-muted-foreground">{casualty.id}</span>
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="min-w-0 truncate text-xs font-semibold text-muted-foreground">{casualty.id}</span>
                             <Button
-                              size="sm"
+                              size="icon-sm"
                               variant="ghost"
                               onClick={() => removeCasualty(idx)}
-                              className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive"
+                              className="shrink-0 hover:bg-destructive/10 hover:text-destructive"
                             >
-                              <Trash2 className="h-3 w-3" />
+                              <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
                           <input
@@ -527,7 +527,7 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
                             placeholder="Injury type"
                             className="w-full px-2 py-1 text-xs rounded bg-input border border-border focus:outline-none focus:ring-1 focus:ring-primary"
                           />
-                          <div className="grid grid-cols-2 gap-2">
+                          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                             <input
                               type="text"
                               value={casualty.severity}
@@ -556,7 +556,7 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
                 <div className="border border-border rounded-md">
                   <button
                     onClick={() => toggleSection("injects")}
-                    className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
+                    className="flex min-h-11 w-full items-center justify-between gap-2 p-3 text-left transition-colors hover:bg-muted/50"
                   >
                     <span className="font-medium text-sm">Injects ({generatedScenario.injects.length})</span>
                     {expandedSections.has("injects") ? (
@@ -569,21 +569,21 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
                     <div className="p-3 space-y-3 border-t border-border bg-muted/20">
                       {generatedScenario.injects.map((inject, idx) => (
                         <div key={idx} className="border border-border rounded bg-background p-3 space-y-2">
-                          <div className="flex items-center justify-between">
+                          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                             <input
                               type="number"
                               value={inject.time}
                               onChange={(e) => updateInject(idx, "time", Number.parseInt(e.target.value))}
                               placeholder="Time (s)"
-                              className="w-20 px-2 py-1 text-xs rounded bg-input border border-border focus:outline-none focus:ring-1 focus:ring-primary"
+                              className="min-h-9 w-full rounded border border-border bg-input px-2 py-2 text-xs sm:w-24"
                             />
                             <Button
-                              size="sm"
+                              size="icon-sm"
                               variant="ghost"
                               onClick={() => removeInject(idx)}
-                              className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive"
+                              className="shrink-0 self-end sm:self-auto hover:bg-destructive/10 hover:text-destructive"
                             >
-                              <Trash2 className="h-3 w-3" />
+                              <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
                           <input
@@ -613,7 +613,7 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
                 <div className="border border-border rounded-md">
                   <button
                     onClick={() => toggleSection("objectives")}
-                    className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
+                    className="flex min-h-11 w-full items-center justify-between gap-2 p-3 text-left transition-colors hover:bg-muted/50"
                   >
                     <span className="font-medium text-sm">Objectives ({generatedScenario.objectives.length})</span>
                     {expandedSections.has("objectives") ? (
@@ -633,10 +633,10 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
                             className="flex-1 px-2 py-1 text-xs rounded bg-background border border-border focus:outline-none focus:ring-1 focus:ring-primary"
                           />
                           <Button
-                            size="sm"
+                            size="icon-sm"
                             variant="ghost"
                             onClick={() => removeArrayItem("objectives", idx)}
-                            className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive"
+                            className="shrink-0 hover:bg-destructive/10 hover:text-destructive"
                           >
                             <Trash2 className="h-3 w-3" />
                           </Button>
@@ -653,7 +653,7 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
                 <div className="border border-border rounded-md">
                   <button
                     onClick={() => toggleSection("actions")}
-                    className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
+                    className="flex min-h-11 w-full items-center justify-between gap-2 p-3 text-left transition-colors hover:bg-muted/50"
                   >
                     <span className="font-medium text-sm">
                       Expected Actions ({generatedScenario.expected_actions.length})
@@ -675,10 +675,10 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
                             className="flex-1 px-2 py-1 text-xs rounded bg-background border border-border focus:outline-none focus:ring-1 focus:ring-primary"
                           />
                           <Button
-                            size="sm"
+                            size="icon-sm"
                             variant="ghost"
                             onClick={() => removeArrayItem("expected_actions", idx)}
-                            className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive"
+                            className="shrink-0 hover:bg-destructive/10 hover:text-destructive"
                           >
                             <Trash2 className="h-3 w-3" />
                           </Button>
@@ -700,7 +700,7 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
                 <div className="border border-border rounded-md">
                   <button
                     onClick={() => toggleSection("metrics")}
-                    className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
+                    className="flex min-h-11 w-full items-center justify-between gap-2 p-3 text-left transition-colors hover:bg-muted/50"
                   >
                     <span className="font-medium text-sm">
                       Evaluation Metrics ({generatedScenario.evaluation_metrics.length})
@@ -722,10 +722,10 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
                             className="flex-1 px-2 py-1 text-xs rounded bg-background border border-border focus:outline-none focus:ring-1 focus:ring-primary"
                           />
                           <Button
-                            size="sm"
+                            size="icon-sm"
                             variant="ghost"
                             onClick={() => removeArrayItem("evaluation_metrics", idx)}
-                            className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive"
+                            className="shrink-0 hover:bg-destructive/10 hover:text-destructive"
                           >
                             <Trash2 className="h-3 w-3" />
                           </Button>
