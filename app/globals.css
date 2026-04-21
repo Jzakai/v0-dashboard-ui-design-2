@@ -1,83 +1,84 @@
-@import 'tailwindcss';
-@import 'tw-animate-css';
+@import "tailwindcss";
+@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  /* Updated color scheme to match Tactex brand colors (green #1B7F5B, red #E52421, gray #D9D9D9) */
   --background: oklch(0.98 0 0);
   --foreground: oklch(0.15 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.15 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.15 0 0);
-  --primary: oklch(0.5 0.15 200);
+  --primary: oklch(0.48 0.12 164); /* Tactex Green #1B7F5B */
   --primary-foreground: oklch(0.98 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.15 0 0);
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.55 0.18 180);
+  --accent: oklch(0.55 0.22 27); /* Tactex Red #E52421 */
   --accent-foreground: oklch(0.98 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.98 0 0);
   --border: oklch(0.92 0 0);
   --input: oklch(0.96 0 0);
-  --ring: oklch(0.5 0.15 200);
-  --chart-1: oklch(0.5 0.15 200);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
+  --ring: oklch(0.48 0.12 164);
+  --chart-1: oklch(0.48 0.12 164);
+  --chart-2: oklch(0.55 0.22 27);
+  --chart-3: oklch(0.85 0.01 0);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
   --radius: 0.75rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.15 0 0);
-  --sidebar-primary: oklch(0.5 0.15 200);
+  --sidebar-primary: oklch(0.48 0.12 164);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.55 0.18 180);
+  --sidebar-accent: oklch(0.55 0.22 27);
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(0.92 0 0);
-  --sidebar-ring: oklch(0.5 0.15 200);
+  --sidebar-ring: oklch(0.48 0.12 164);
 }
 
 .dark {
-  /* Updated dark theme with medical teal/cyan colors and improved contrast */
+  /* Updated dark theme with Tactex brand colors for consistency */
   --background: oklch(0.08 0.01 220);
   --foreground: oklch(0.98 0 0);
   --card: oklch(0.12 0.01 220);
   --card-foreground: oklch(0.98 0 0);
   --popover: oklch(0.12 0.01 220);
   --popover-foreground: oklch(0.98 0 0);
-  --primary: rgb(163, -85, -85);
+  --primary: oklch(0.52 0.12 164); /* Tactex Green (slightly brighter for dark mode) */
   --primary-foreground: oklch(0.08 0.01 220);
   --secondary: oklch(0.18 0.01 220);
   --secondary-foreground: oklch(0.98 0 0);
   --muted: oklch(0.18 0.01 220);
   --muted-foreground: oklch(0.65 0 0);
-  --accent: oklch(0.55 0.18 180);
+  --accent: oklch(0.6 0.22 27); /* Tactex Red (slightly brighter for dark mode) */
   --accent-foreground: oklch(0.08 0.01 220);
   --destructive: oklch(0.5 0.2 25);
   --destructive-foreground: oklch(0.98 0 0);
   --border: oklch(0.2 0.01 220);
   --input: oklch(0.15 0.01 220);
-  --ring: oklch(0.6 0.15 200);
-  --chart-1: oklch(0.6 0.15 200);
-  --chart-2: oklch(0.696 0.17 162.48);
+  --ring: oklch(0.52 0.12 164);
+  --chart-1: oklch(0.52 0.12 164);
+  --chart-2: oklch(0.6 0.22 27);
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
   --sidebar: oklch(0.1 0.01 220);
   --sidebar-foreground: oklch(0.98 0 0);
-  --sidebar-primary: oklch(0.6 0.15 200);
+  --sidebar-primary: oklch(0.52 0.12 164);
   --sidebar-primary-foreground: oklch(0.08 0.01 220);
-  --sidebar-accent: oklch(0.55 0.18 180);
+  --sidebar-accent: oklch(0.6 0.22 27);
   --sidebar-accent-foreground: oklch(0.08 0.01 220);
   --sidebar-border: oklch(0.18 0.01 220);
-  --sidebar-ring: oklch(0.6 0.15 200);
+  --sidebar-ring: oklch(0.52 0.12 164);
 }
 
 @theme inline {
-  --font-sans: 'Geist', 'Geist Fallback';
-  --font-mono: 'Geist Mono', 'Geist Mono Fallback';
+  --font-sans: "Geist", "Geist Fallback";
+  --font-mono: "Geist Mono", "Geist Mono Fallback";
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);

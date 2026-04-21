@@ -4,20 +4,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 
 export default function TraineeDashboard() {
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Trainee Dashboard</h1>
+        <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Trainee Dashboard</h1>
         <p className="text-muted-foreground">Quick overview of your trainings</p>
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Assigned Trainings</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-foreground">8</div>
+            <div className="text-2xl font-bold text-foreground sm:text-3xl">8</div>
           </CardContent>
         </Card>
 
@@ -26,7 +26,7 @@ export default function TraineeDashboard() {
             <CardTitle className="text-sm font-medium text-muted-foreground">Completed Trainings</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-foreground">5</div>
+            <div className="text-2xl font-bold text-foreground sm:text-3xl">5</div>
           </CardContent>
         </Card>
 
@@ -35,7 +35,7 @@ export default function TraineeDashboard() {
             <CardTitle className="text-sm font-medium text-muted-foreground">Average Score</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-foreground">87%</div>
+            <div className="text-2xl font-bold text-foreground sm:text-3xl">87%</div>
           </CardContent>
         </Card>
       </div>

@@ -36,7 +36,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className={`font-sans antialiased`}>
+      <body className="min-h-dvh font-sans antialiased">
         {children}
       </body>
     </html>

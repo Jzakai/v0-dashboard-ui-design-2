@@ -46,30 +46,33 @@ export function ScenarioVisualization({ onAssignCourse, onBackToCourse }: Scenar
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Scenario Visualization</h1>
-          <p className="text-muted-foreground mt-2">Course successfully published and ready for assignment</p>
-          <div className="flex items-center gap-2 mt-3">
-            <span className="inline-block px-3 py-1 rounded-full bg-primary/20 text-primary text-xs font-semibold">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Scenario Visualization</h1>
+          <p className="mt-2 text-muted-foreground">Course successfully published and ready for assignment</p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className="inline-block rounded-full bg-primary/20 px-3 py-1 text-xs font-semibold text-primary">
               Published · Version 1.0
             </span>
           </div>
         </div>
-        <div className="flex gap-3">
-          <Button variant="outline" onClick={onBackToCourse}>
+        <div className="flex w-full flex-col gap-3 sm:flex-row sm:flex-wrap lg:w-auto lg:shrink-0">
+          <Button variant="outline" className="w-full sm:flex-1 lg:w-auto" onClick={onBackToCourse}>
             Back to Course
           </Button>
-          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground" onClick={onAssignCourse}>
+          <Button
+            className="w-full bg-primary text-primary-foreground hover:bg-primary/90 sm:flex-1 lg:w-auto"
+            onClick={onAssignCourse}
+          >
             Assign Course
           </Button>
         </div>
       </div>
 
-      {/* Main Content - Two Column Layout */}
-      <div className="grid grid-cols-[70%_30%] gap-6">
+      {/* Main Content — stacks on small screens */}
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-5">
         {/* Left Side - 3D Visualization Placeholder */}
-        <div className="space-y-4">
+        <div className="space-y-4 xl:col-span-3">
           <Card className="overflow-hidden">
             <div className="bg-gradient-to-br from-slate-900 to-slate-800 aspect-video flex flex-col items-center justify-center relative border-b border-border">
               {/* Grid Pattern Background */}
@@ -124,7 +127,7 @@ export function ScenarioVisualization({ onAssignCourse, onBackToCourse }: Scenar
         </div>
 
         {/* Right Side - Information Panel */}
-        <div className="space-y-4">
+        <div className="space-y-4 xl:col-span-2">
           {/* Scenario Summary Card */}
           <Card>
             <CardHeader className="pb-3">
