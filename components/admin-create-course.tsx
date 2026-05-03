@@ -310,6 +310,7 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
               <input
                 type="text"
                 placeholder="e.g., Hemorrhage Control - Urban Combat"
+                placeholder="e.g., Hemorrhage Control - Urban Combat"
                 value={courseName}
                 onChange={(e) => setCourseName(e.target.value)}
                 className="min-h-11 w-full rounded-md border border-border bg-input px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
@@ -317,6 +318,7 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
             </div>
 
             <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Skill Category</label>
               <label className="text-sm font-medium text-foreground">Skill Category</label>
               <select
                 value={skillCategory}
@@ -326,16 +328,25 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
                 <option>Care Under Fire</option>
                 <option>Tactical Field Care</option>
                 <option>Tactical Evacuation</option>
+                <option>Care Under Fire</option>
+                <option>Tactical Field Care</option>
+                <option>Tactical Evacuation</option>
               </select>
             </div>
 
             <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Skill</label>
               <label className="text-sm font-medium text-foreground">Skill</label>
               <select
                 value={skill}
                 onChange={(e) => setSkill(e.target.value)}
                 className="min-h-11 w-full rounded-md border border-border bg-input px-4 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               >
+                {skillsByCategory[skillCategory]?.map((skillOption) => (
+                  <option key={skillOption} value={skillOption}>
+                    {skillOption}
+                  </option>
+                ))}
                 {skillsByCategory[skillCategory]?.map((skillOption) => (
                   <option key={skillOption} value={skillOption}>
                     {skillOption}
@@ -756,5 +767,6 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
         </div>
       </div>
     </div>
+  )
   )
 }

@@ -1,4 +1,5 @@
 "use client"
+"use client"
 
 import { useState } from "react"
 import { cn } from "@/lib/utils"
@@ -29,8 +30,12 @@ export function Sidebar({ userRole, userName, onLogout, onNavigate, mobileOpen, 
   ]
 
   const items = userRole === "admin" ? adminItems : traineeItems
+  const items = userRole === "admin" ? adminItems : traineeItems
 
   const handleClick = (itemId: string) => {
+    setActiveItem(itemId)
+    onNavigate(itemId)
+  }
     setActiveItem(itemId)
     onNavigate(itemId)
   }
@@ -125,9 +130,11 @@ export function Sidebar({ userRole, userName, onLogout, onNavigate, mobileOpen, 
           className="flex min-h-11 w-full items-center gap-3 rounded-xl px-4 py-3 text-sidebar-foreground transition-all hover:bg-destructive/10 hover:text-destructive active:bg-destructive/15"
         >
           <LogOut className="w-5 h-5" />
+          <LogOut className="w-5 h-5" />
           <span className="text-sm font-semibold">Sign Out</span>
         </button>
       </div>
     </aside>
+  )
   )
 }

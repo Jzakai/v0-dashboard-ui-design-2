@@ -1,4 +1,5 @@
 "use client"
+"use client"
 
 import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -54,8 +55,65 @@ const resultsData = [
     feedback: "Strong performance in shock assessment. IV access established efficiently.",
   },
 ]
+  {
+    id: 1,
+    course: "Hemorrhage Control – Urban",
+    score: 92,
+    duration: "4m 32s",
+    criticalErrors: 0,
+    kpis: {
+      tourniquetTime: 52,
+      tourniquetTarget: 60,
+      marchCompliance: 95,
+      decisionAccuracy: 90,
+    },
+    date: "2025-01-10",
+    status: "Pass",
+    feedback: "Excellent tourniquet application under pressure. Consider faster initial assessment.",
+  },
+  {
+    id: 2,
+    course: "Chest Injury Response",
+    score: 85,
+    duration: "5m 15s",
+    criticalErrors: 1,
+    kpis: {
+      chestSealTime: 68,
+      chestSealTarget: 60,
+      marchCompliance: 82,
+      decisionAccuracy: 88,
+    },
+    date: "2025-01-08",
+    status: "Pass",
+    feedback: "Good response to chest trauma. Chest seal application was slightly delayed.",
+  },
+  {
+    id: 3,
+    course: "Shock Management",
+    score: 88,
+    duration: "3m 48s",
+    criticalErrors: 0,
+    kpis: {
+      ivAccessTime: 95,
+      ivAccessTarget: 90,
+      marchCompliance: 90,
+      decisionAccuracy: 85,
+    },
+    date: "2025-01-05",
+    status: "Pass",
+    feedback: "Strong performance in shock assessment. IV access established efficiently.",
+  },
+]
 
 export function TraineeMyResults() {
+  const [selectedCourse, setSelectedCourse] = useState("")
+  const [fromDate, setFromDate] = useState("")
+  const [toDate, setToDate] = useState("")
+  const [expandedResult, setExpandedResult] = useState<number | null>(null)
+
+  const toggleAARDetails = (id: number) => {
+    setExpandedResult(expandedResult === id ? null : id)
+  }
   const [selectedCourse, setSelectedCourse] = useState("")
   const [fromDate, setFromDate] = useState("")
   const [toDate, setToDate] = useState("")
@@ -172,8 +230,10 @@ export function TraineeMyResults() {
       </div>
 
       {/* Filters Card */}
+      {/* Filters Card */}
       <Card>
         <CardHeader>
+          <CardTitle>Filter Results</CardTitle>
           <CardTitle>Filter Results</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -213,5 +273,6 @@ export function TraineeMyResults() {
         </CardContent>
       </Card>
     </div>
+  )
   )
 }

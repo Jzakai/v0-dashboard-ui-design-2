@@ -4,6 +4,8 @@ import type React from "react"
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
 
 interface LoginModalProps {
   onLogin: (role: "admin" | "trainee", name: string) => void
@@ -132,11 +134,11 @@ export function LoginModal({ onLogin }: LoginModalProps) {
               />
             </div>
 
+            {/* PASSWORD */}
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-card-foreground block">Password</label>
+              <label className="text-sm font-semibold">Password</label>
               <input
                 type="password"
-                placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="min-h-11 w-full rounded-xl border border-border bg-input px-4 py-3 text-card-foreground transition-all placeholder:text-muted-foreground focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary"
@@ -207,5 +209,6 @@ export function LoginModal({ onLogin }: LoginModalProps) {
         </div>
       </div>
     </div>
+  )
   )
 }

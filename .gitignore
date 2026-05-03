@@ -10,3 +10,11 @@ npm-debug.log*
 pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+.env
+node_modules
+# Next.js build output
+.next/
+# Python junk
+__pycache__/
+*.pyc

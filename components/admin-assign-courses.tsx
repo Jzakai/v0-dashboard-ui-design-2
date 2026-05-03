@@ -1,4 +1,5 @@
 "use client"
+"use client"
 
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react"
 import { Button } from "@/components/ui/button"
@@ -214,6 +215,9 @@ export function AdminAssignCourses() {
             <CardDescription>
               {selectedTrainees.length > 0 ? `${selectedTrainees.length} selected` : "Select trainees"}
             </CardDescription>
+            <CardDescription>
+              {selectedTrainees.length > 0 ? `${selectedTrainees.length} selected` : "Select trainees"}
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-3">
@@ -285,10 +289,11 @@ export function AdminAssignCourses() {
           <CardHeader>
             <CardTitle>Assignment Details</CardTitle>
             <CardDescription>Course and timeline configuration</CardDescription>
+            <CardDescription>Course and timeline configuration</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Course</label>
+              <label className="text-sm font-medium text-foreground">Skill Category</label>
               <select
                 value={selectedScenarioId}
                 onChange={(e) => setSelectedScenarioId(e.target.value)}
@@ -425,5 +430,6 @@ export function AdminAssignCourses() {
         </Card>
       </div>
     </div>
+  )
   )
 }

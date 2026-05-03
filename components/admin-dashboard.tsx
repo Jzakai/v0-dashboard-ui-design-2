@@ -1,4 +1,5 @@
 "use client"
+"use client"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
@@ -133,6 +134,38 @@ export default function AdminDashboard() {
                     date: "2025-01-13",
                     status: "Completed",
                   },
+                  {
+                    trainee: "John Smith",
+                    course: "Hemorrhage Control",
+                    score: 95,
+                    march: 98,
+                    date: "2025-01-15",
+                    status: "Completed",
+                  },
+                  {
+                    trainee: "Sarah Johnson",
+                    course: "Chest Injury",
+                    score: 87,
+                    march: 85,
+                    date: "2025-01-14",
+                    status: "Completed",
+                  },
+                  {
+                    trainee: "Mike Davis",
+                    course: "Triage Training",
+                    score: 78,
+                    march: 82,
+                    date: "2025-01-13",
+                    status: "Completed",
+                  },
+                  {
+                    trainee: "Emma Wilson",
+                    course: "Hemorrhage Control",
+                    score: 92,
+                    march: 95,
+                    date: "2025-01-13",
+                    status: "Completed",
+                  },
                 ].map((row, idx) => (
                   <tr key={idx} className="border-b border-border hover:bg-muted/30 transition-colors">
                     <td className="px-3 py-3 sm:px-6 sm:py-4">
@@ -172,5 +205,6 @@ export default function AdminDashboard() {
         </CardContent>
       </Card>
     </div>
+  )
   )
 }

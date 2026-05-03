@@ -1,4 +1,5 @@
 "use client"
+"use client"
 
 import type { ReactNode } from "react"
 import { useEffect, useState } from "react"
@@ -7,6 +8,11 @@ import { Button } from "@/components/ui/button"
 import { Sidebar } from "./sidebar"
 
 interface DashboardLayoutProps {
+  children: ReactNode
+  userRole: "admin" | "trainee"
+  userName: string
+  onLogout: () => void
+  onNavigate: (page: string) => void
   children: ReactNode
   userRole: "admin" | "trainee"
   userName: string
@@ -76,5 +82,6 @@ export function DashboardLayout({ children, userRole, userName, onLogout, onNavi
         </main>
       </div>
     </div>
+  )
   )
 }
