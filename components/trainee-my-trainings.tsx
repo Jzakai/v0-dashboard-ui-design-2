@@ -291,5 +291,5 @@ export function TraineeMyTrainings() {
       </Card>
     </div>
   )
-  )
+  
 }

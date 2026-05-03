@@ -79,16 +79,12 @@ export default function Home() {
   }
 
   return (
-<<<<<<< HEAD
     <DashboardLayout
       userRole={userRole}
       userName={userName}
       onLogout={handleLogout}
       onNavigate={(page) => handleNavigate(page as PageType)}
     >
-=======
-    <DashboardLayout userRole={userRole} userName={userName} onLogout={handleLogout} onNavigate={handleNavigate}>
->>>>>>> origin/integration
       {renderPage()}
     </DashboardLayout>
   )

@@ -1,5 +1,4 @@
 "use client"
-"use client"
 
 import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -54,7 +53,6 @@ const resultsData = [
     status: "Pass",
     feedback: "Strong performance in shock assessment. IV access established efficiently.",
   },
-]
   {
     id: 1,
     course: "Hemorrhage Control – Urban",
@@ -274,5 +272,5 @@ export function TraineeMyResults() {
       </Card>
     </div>
   )
-  )
+  
 }
