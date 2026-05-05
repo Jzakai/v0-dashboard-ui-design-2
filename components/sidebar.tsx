@@ -30,12 +30,10 @@ export function Sidebar({ userRole, userName, onLogout, onNavigate, mobileOpen, 
   ]
 
   const items = userRole === "admin" ? adminItems : traineeItems
-  const items = userRole === "admin" ? adminItems : traineeItems
+
 
   const handleClick = (itemId: string) => {
-    setActiveItem(itemId)
-    onNavigate(itemId)
-  }
+  
     setActiveItem(itemId)
     onNavigate(itemId)
   }
@@ -135,6 +133,5 @@ export function Sidebar({ userRole, userName, onLogout, onNavigate, mobileOpen, 
         </button>
       </div>
     </aside>
-  )
   )
 }

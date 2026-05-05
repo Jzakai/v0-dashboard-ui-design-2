@@ -112,14 +112,6 @@ export function TraineeMyResults() {
   const toggleAARDetails = (id: number) => {
     setExpandedResult(expandedResult === id ? null : id)
   }
-  const [selectedCourse, setSelectedCourse] = useState("")
-  const [fromDate, setFromDate] = useState("")
-  const [toDate, setToDate] = useState("")
-  const [expandedResult, setExpandedResult] = useState<number | null>(null)
-
-  const toggleAARDetails = (id: number) => {
-    setExpandedResult(expandedResult === id ? null : id)
-  }
 
   return (
     <div className="space-y-6">

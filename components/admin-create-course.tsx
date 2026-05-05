@@ -1,37 +1,54 @@
+
 "use client"
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ChevronDown, ChevronUp, Plus, Trash2, Brain } from "lucide-react"
+import { Plus, Trash2, ChevronDown, ChevronUp } from "lucide-react"
+import { Rationale } from "next/font/google"
 
 interface AdminCreateCourseProps {
   onPublish?: () => void
 }
 
 interface Casualty {
-  id: string
-  injury_type: string
-  severity: string
-  location: string
+  name: string
+  injuries: string[]
+  status: string
 }
 
 interface Inject {
-  time: number
-  event: string
-  description: string
+  type: string
+  location: string
+}
+
+interface ExpectedAction {
+  action: string
+  justification: string
+}
+
+interface EvaluationMetric {
+  metric: string
+  target: string
+}
+
+interface Environment {
+  location: string
+  terrain: string
+  weather: string
 }
 
 interface GeneratedScenario {
-  environment: string
+  environment: Environment
   skill_category: string
   skill: string
   difficulty: string
   casualties: Casualty[]
   injects: Inject[]
-  objectives: string[]
-  expected_actions: string[]
-  evaluation_metrics: string[]
+  objectives: Array<{ type: string; description: string }>
+  expected_actions: ExpectedAction[]
+  evaluation_metrics: EvaluationMetric[]
+  rationale?: string
 }
 
 const skillsByCategory: Record<string, string[]> = {
@@ -52,6 +69,8 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
   const [isGenerating, setIsGenerating] = useState(false)
   const [scenarioGenerated, setScenarioGenerated] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [scenarioId, setScenarioId] = useState<string | null>(null)
+
 
   const [generatedScenario, setGeneratedScenario] = useState<GeneratedScenario | null>(null)
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set())
@@ -79,7 +98,7 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
     // Send POST request to backend
     try {
       setIsGenerating(true)
-      const response = await fetch("http://127.0.0.1:8000/scenario/generate_scenario", {
+      const response = await fetch("http://localhost:8000/scenario/generate_scenario", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -95,56 +114,34 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
 
+      //added
       const data = await response.json()
       console.log("[v0] Backend response:", data)
 
-      const mockScenario: GeneratedScenario = {
-        environment: "Urban street - post-engagement zone with damaged vehicles",
-        skill_category: skillCategory,
-        skill: skill,
-        difficulty: difficulty,
-        casualties: [
+      if (data.scenario_id) {
+        setScenarioId(data.scenario_id)
+        }
+
+      if (data.scenario_spec && data.rationale) {
+        const parsedScenario: GeneratedScenario = {
+          ...data.scenario_spec,
+          rationale: data.rationale,
+        }
+        setGeneratedScenario(parsedScenario)
+        setScenarioGenerated(true)
+        setChatMessages((prev) => [
+          ...prev,
           {
-            id: "casualty_1",
-            injury_type: "Severe lower limb hemorrhage",
-            severity: "Critical",
-            location: "Left femoral artery",
+            role: "assistant",
+            content:
+              "Scenario generated successfully! Review and edit the details below. You can modify any section by clicking on it.",
           },
-        ],
-        injects: [
-          { time: 30, event: "Enemy fire nearby", description: "Sporadic gunfire 200m east" },
-          { time: 90, event: "Casualty becomes unresponsive", description: "Check airway and breathing" },
-        ],
-        objectives: [
-          "Control massive hemorrhage within 60 seconds",
-          "Apply tourniquet correctly",
-          "Assess and manage airway",
-        ],
-        expected_actions: [
-          "Apply tourniquet high and tight",
-          "Mark time on tourniquet",
-          "Check distal pulse",
-          "Monitor casualty vitals",
-        ],
-        evaluation_metrics: [
-          "Time to hemorrhage control",
-          "Tourniquet placement accuracy",
-          "MARCH protocol adherence",
-          "Communication effectiveness",
-        ],
+        ])
+      } else {
+        throw new Error("Invalid response format from backend")
       }
 
-      setGeneratedScenario(mockScenario)
-      setScenarioGenerated(true)
       setIsGenerating(false)
-      setChatMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content:
-            "Scenario generated successfully! Review and edit the details below. You can modify any section by clicking on it.",
-        },
-      ])
     } catch (error) {
       console.error("[v0] Error generating scenario:", error)
       setIsGenerating(false)
@@ -152,7 +149,7 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
         ...prev,
         {
           role: "assistant",
-          content: "Error connecting to backend. Showing demo scenario for testing.",
+          content: "Error generating scenario. Please check the backend connection and try again.",
         },
       ])
     }
@@ -162,19 +159,27 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
     console.log("[v0] Admin: Save scenario request")
     setIsSaving(true)
 
+    if (!courseName || courseName.trim() === "") {
+    alert("Course Name cannot be empty.");
+    return; // stop the save
+  }
+
     try {
-      const response = await fetch("/save_scenario", {
+      const response = await fetch("http://localhost:8000/scenario/save_scenario", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          courseName,
-          skillCategory,
-          skill,
-          difficulty,
-          scenario: generatedScenario,
-        }),
+      user_id: localStorage.getItem("user_id"),
+      scenario_id: scenarioId,
+      scenario_json: generatedScenario,
+      skill: skill,
+      skill_category: skillCategory,
+      difficulty: difficulty,
+      course_name: courseName,
+      rationale: generatedScenario?.rationale
+    }),
       })
 
       if (!response.ok) {
@@ -188,9 +193,9 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
       setIsSaving(false)
       alert("✓ Scenario saved and published successfully!\n\nThe course is now available for assignment to trainees.")
 
-      if (onPublish) {
-        onPublish()
-      }
+      //if (onPublish) {
+      //  onPublish()
+      //}
     } catch (error) {
       console.error("[v0] Error saving scenario:", error)
       setIsSaving(false)
@@ -219,10 +224,9 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
   const addCasualty = () => {
     if (generatedScenario) {
       const newCasualty: Casualty = {
-        id: `casualty_${generatedScenario.casualties.length + 1}`,
-        injury_type: "New injury",
-        severity: "Moderate",
-        location: "Specify location",
+        name: "New Casualty",
+        injuries: ["Specify injury"],
+        status: "Stable",
       }
       updateScenarioField("casualties", [...generatedScenario.casualties, newCasualty])
     }
@@ -235,7 +239,7 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
     }
   }
 
-  const updateCasualty = (index: number, field: keyof Casualty, value: string) => {
+  const updateCasualty = (index: number, field: keyof Casualty, value: string | string[]) => {
     if (generatedScenario) {
       const updated = [...generatedScenario.casualties]
       updated[index] = { ...updated[index], [field]: value }
@@ -243,9 +247,33 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
     }
   }
 
+  const addInjuryToCasualty = (casualtyIndex: number) => {
+    if (generatedScenario) {
+      const updated = [...generatedScenario.casualties]
+      updated[casualtyIndex].injuries = [...updated[casualtyIndex].injuries, "New injury"]
+      updateScenarioField("casualties", updated)
+    }
+  }
+
+  const removeInjuryFromCasualty = (casualtyIndex: number, injuryIndex: number) => {
+    if (generatedScenario) {
+      const updated = [...generatedScenario.casualties]
+      updated[casualtyIndex].injuries = updated[casualtyIndex].injuries.filter((_, i) => i !== injuryIndex)
+      updateScenarioField("casualties", updated)
+    }
+  }
+
+  const updateInjury = (casualtyIndex: number, injuryIndex: number, value: string) => {
+    if (generatedScenario) {
+      const updated = [...generatedScenario.casualties]
+      updated[casualtyIndex].injuries[injuryIndex] = value
+      updateScenarioField("casualties", updated)
+    }
+  }
+
   const addInject = () => {
     if (generatedScenario) {
-      const newInject: Inject = { time: 0, event: "New event", description: "Description" }
+      const newInject: Inject = { type: "New event", location: "Specify location" }
       updateScenarioField("injects", [...generatedScenario.injects, newInject])
     }
   }
@@ -257,7 +285,7 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
     }
   }
 
-  const updateInject = (index: number, field: keyof Inject, value: string | number) => {
+  const updateInject = (index: number, field: keyof Inject, value: string) => {
     if (generatedScenario) {
       const updated = [...generatedScenario.injects]
       updated[index] = { ...updated[index], [field]: value }
@@ -265,44 +293,97 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
     }
   }
 
-  const addArrayItem = (field: "objectives" | "expected_actions" | "evaluation_metrics") => {
+  const addObjective = () => {
     if (generatedScenario) {
-      updateScenarioField(field, [...generatedScenario[field], "New item"])
+      updateScenarioField("objectives", [
+        ...generatedScenario.objectives,
+        { type: "Medical", description: "New objective" },
+      ])
     }
   }
 
-  const removeArrayItem = (field: "objectives" | "expected_actions" | "evaluation_metrics", index: number) => {
+  const removeObjective = (index: number) => {
     if (generatedScenario) {
-      const updated = generatedScenario[field].filter((_, i) => i !== index)
-      updateScenarioField(field, updated)
+      const updated = generatedScenario.objectives.filter((_, i) => i !== index)
+      updateScenarioField("objectives", updated)
     }
   }
 
-  const updateArrayItem = (
-    field: "objectives" | "expected_actions" | "evaluation_metrics",
-    index: number,
-    value: string,
-  ) => {
+  const updateObjective = (index: number, field: "type" | "description", value: string) => {
     if (generatedScenario) {
-      const updated = [...generatedScenario[field]]
-      updated[index] = value
-      updateScenarioField(field, updated)
+      const updated = [...generatedScenario.objectives]
+      updated[index] = { ...updated[index], [field]: value }
+      updateScenarioField("objectives", updated)
+    }
+  }
+
+  const addExpectedAction = () => {
+    if (generatedScenario) {
+      updateScenarioField("expected_actions", [
+        ...generatedScenario.expected_actions,
+        { action: "New action", justification: "Justification" },
+      ])
+    }
+  }
+
+  const removeExpectedAction = (index: number) => {
+    if (generatedScenario) {
+      const updated = generatedScenario.expected_actions.filter((_, i) => i !== index)
+      updateScenarioField("expected_actions", updated)
+    }
+  }
+
+  const updateExpectedAction = (index: number, field: "action" | "justification", value: string) => {
+    if (generatedScenario) {
+      const updated = [...generatedScenario.expected_actions]
+      updated[index] = { ...updated[index], [field]: value }
+      updateScenarioField("expected_actions", updated)
+    }
+  }
+
+  const addEvaluationMetric = () => {
+    if (generatedScenario) {
+      updateScenarioField("evaluation_metrics", [
+        ...generatedScenario.evaluation_metrics,
+        { metric: "New metric", target: "Target" },
+      ])
+    }
+  }
+
+  const removeEvaluationMetric = (index: number) => {
+    if (generatedScenario) {
+      const updated = generatedScenario.evaluation_metrics.filter((_, i) => i !== index)
+      updateScenarioField("evaluation_metrics", updated)
+    }
+  }
+
+  const updateEvaluationMetric = (index: number, field: "metric" | "target", value: string) => {
+    if (generatedScenario) {
+      const updated = [...generatedScenario.evaluation_metrics]
+      updated[index] = { ...updated[index], [field]: value }
+      updateScenarioField("evaluation_metrics", updated)
+    }
+  }
+
+  const updateEnvironment = (field: keyof Environment, value: string) => {
+    if (generatedScenario) {
+      updateScenarioField("environment", { ...generatedScenario.environment, [field]: value })
     }
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Create Course</h1>
-        <p className="text-muted-foreground">AI-powered scenario generation with RAG Agent</p>
+        <h1 className="text-3xl font-bold text-foreground">Create Course</h1>
+        <p className="text-muted-foreground">AI-powered Tactical Medical Training scenario generation with RAG Agent</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
+      <div className="grid grid-cols-2 gap-6">
         {/* Left Column - Scenario Configuration */}
         <Card>
           <CardHeader>
             <CardTitle>Scenario Configuration</CardTitle>
-            <CardDescription>Define the scenario parameters </CardDescription>
+            <CardDescription>Define parameters for AI generation</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -310,24 +391,19 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
               <input
                 type="text"
                 placeholder="e.g., Hemorrhage Control - Urban Combat"
-                placeholder="e.g., Hemorrhage Control - Urban Combat"
                 value={courseName}
                 onChange={(e) => setCourseName(e.target.value)}
-                className="min-h-11 w-full rounded-md border border-border bg-input px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full px-4 py-2 rounded-md bg-input text-foreground placeholder:text-muted-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">Skill Category</label>
-              <label className="text-sm font-medium text-foreground">Skill Category</label>
               <select
                 value={skillCategory}
                 onChange={(e) => handleSkillCategoryChange(e.target.value)}
-                className="min-h-11 w-full rounded-md border border-border bg-input px-4 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full px-4 py-2 rounded-md bg-input text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary"
               >
-                <option>Care Under Fire</option>
-                <option>Tactical Field Care</option>
-                <option>Tactical Evacuation</option>
                 <option>Care Under Fire</option>
                 <option>Tactical Field Care</option>
                 <option>Tactical Evacuation</option>
@@ -336,17 +412,11 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">Skill</label>
-              <label className="text-sm font-medium text-foreground">Skill</label>
               <select
                 value={skill}
                 onChange={(e) => setSkill(e.target.value)}
-                className="min-h-11 w-full rounded-md border border-border bg-input px-4 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full px-4 py-2 rounded-md bg-input text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary"
               >
-                {skillsByCategory[skillCategory]?.map((skillOption) => (
-                  <option key={skillOption} value={skillOption}>
-                    {skillOption}
-                  </option>
-                ))}
                 {skillsByCategory[skillCategory]?.map((skillOption) => (
                   <option key={skillOption} value={skillOption}>
                     {skillOption}
@@ -360,7 +430,7 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
               <select
                 value={difficulty}
                 onChange={(e) => setDifficulty(e.target.value)}
-                className="min-h-11 w-full rounded-md border border-border bg-input px-4 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full px-4 py-2 rounded-md bg-input text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option>Easy</option>
                 <option>Medium</option>
@@ -368,17 +438,17 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
               </select>
             </div>
 
-            <div className="flex flex-col gap-3 pt-4 sm:flex-row">
+            <div className="flex gap-3 pt-4">
               <Button
                 onClick={handleGenerateScenario}
-                className="w-full flex-1 bg-primary text-primary-foreground hover:bg-primary/90 sm:w-auto"
+                className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
                 disabled={isGenerating}
               >
                 {isGenerating ? "Generating..." : "Generate Scenario"}
               </Button>
               <Button
                 variant="outline"
-                className="w-full flex-1 bg-transparent sm:w-auto"
+                className="flex-1 bg-transparent"
                 onClick={() => {
                   setCourseName("")
                   setShowChatbot(false)
@@ -402,11 +472,11 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
             <CardContent>
               {showChatbot ? (
                 <div className="space-y-3">
-                  <div className="h-36 space-y-3 overflow-y-auto rounded-md border border-border bg-muted/50 p-3 sm:h-40 sm:p-4">
+                  <div className="border border-border rounded-md bg-muted/50 p-4 h-32 overflow-y-auto space-y-3">
                     {chatMessages.map((msg, idx) => (
                       <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                         <div
-                          className={`max-w-[min(90vw,20rem)] px-3 py-2 rounded-lg text-sm sm:max-w-[85%] ${
+                          className={`max-w-[90%] px-3 py-2 rounded-lg text-sm ${
                             msg.role === "user"
                               ? "bg-primary text-primary-foreground"
                               : "bg-background border border-border text-foreground"
@@ -431,13 +501,11 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
               ) : (
                 <div className="flex items-center justify-center py-12 text-center">
                   <div className="space-y-3">
-                    <div className="flex justify-center">
-                      
-                    </div>
+                    <div className="text-4xl" />
                     <p className="text-sm text-muted-foreground">
                       Click "Generate Scenario" to start
                       <br />
-                      creating the VR training course
+                      creating your VR training course
                     </p>
                   </div>
                 </div>
@@ -452,11 +520,56 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
                 <CardDescription>Click on sections to modify scenario elements</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3 max-h-[600px] overflow-y-auto">
+                <div className="border border-border rounded-md">
+                  <button
+                    onClick={() => toggleSection("environment")}
+                    className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
+                  >
+                    <span className="font-medium text-sm">Environment</span>
+                    {expandedSections.has("environment") ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                  </button>
+                  {expandedSections.has("environment") && (
+                    <div className="p-3 space-y-3 border-t border-border bg-muted/20">
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-muted-foreground">Location</label>
+                        <input
+                          type="text"
+                          value={generatedScenario.environment.location}
+                          onChange={(e) => updateEnvironment("location", e.target.value)}
+                          className="w-full px-3 py-1.5 text-sm rounded bg-background border border-border focus:outline-none focus:ring-2 focus:ring-primary"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-muted-foreground">Terrain</label>
+                        <input
+                          type="text"
+                          value={generatedScenario.environment.terrain}
+                          onChange={(e) => updateEnvironment("terrain", e.target.value)}
+                          className="w-full px-3 py-1.5 text-sm rounded bg-background border border-border focus:outline-none focus:ring-2 focus:ring-primary"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-muted-foreground">Weather</label>
+                        <input
+                          type="text"
+                          value={generatedScenario.environment.weather}
+                          onChange={(e) => updateEnvironment("weather", e.target.value)}
+                          className="w-full px-3 py-1.5 text-sm rounded bg-background border border-border focus:outline-none focus:ring-2 focus:ring-primary"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 {/* Basic Info Section */}
                 <div className="border border-border rounded-md">
                   <button
                     onClick={() => toggleSection("basic")}
-                    className="flex min-h-11 w-full items-center justify-between gap-2 p-3 text-left transition-colors hover:bg-muted/50"
+                    className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
                   >
                     <span className="font-medium text-sm">Basic Information</span>
                     {expandedSections.has("basic") ? (
@@ -467,16 +580,7 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
                   </button>
                   {expandedSections.has("basic") && (
                     <div className="p-3 space-y-3 border-t border-border bg-muted/20">
-                      <div className="space-y-1">
-                        <label className="text-xs font-medium text-muted-foreground">Environment</label>
-                        <input
-                          type="text"
-                          value={generatedScenario.environment}
-                          onChange={(e) => updateScenarioField("environment", e.target.value)}
-                          className="w-full px-3 py-1.5 text-sm rounded bg-background border border-border focus:outline-none focus:ring-2 focus:ring-primary"
-                        />
-                      </div>
-                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      <div className="grid grid-cols-2 gap-2">
                         <div className="space-y-1">
                           <label className="text-xs font-medium text-muted-foreground">Skill Category</label>
                           <input
@@ -487,27 +591,35 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
                           />
                         </div>
                         <div className="space-y-1">
-                          <label className="text-xs font-medium text-muted-foreground">Difficulty</label>
-                          <select
-                            value={generatedScenario.difficulty}
-                            onChange={(e) => updateScenarioField("difficulty", e.target.value)}
+                          <label className="text-xs font-medium text-muted-foreground">Skill</label>
+                          <input
+                            type="text"
+                            value={generatedScenario.skill}
+                            onChange={(e) => updateScenarioField("skill", e.target.value)}
                             className="w-full px-3 py-1.5 text-sm rounded bg-background border border-border focus:outline-none focus:ring-2 focus:ring-primary"
-                          >
-                            <option>Easy</option>
-                            <option>Medium</option>
-                            <option>Hard</option>
-                          </select>
+                          />
                         </div>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-muted-foreground">Difficulty</label>
+                        <select
+                          value={generatedScenario.difficulty}
+                          onChange={(e) => updateScenarioField("difficulty", e.target.value)}
+                          className="w-full px-3 py-1.5 text-sm rounded bg-background border border-border focus:outline-none focus:ring-2 focus:ring-primary"
+                        >
+                          <option>Easy</option>
+                          <option>Medium</option>
+                          <option>Hard</option>
+                        </select>
                       </div>
                     </div>
                   )}
                 </div>
 
-                {/* Casualties Section */}
                 <div className="border border-border rounded-md">
                   <button
                     onClick={() => toggleSection("casualties")}
-                    className="flex min-h-11 w-full items-center justify-between gap-2 p-3 text-left transition-colors hover:bg-muted/50"
+                    className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
                   >
                     <span className="font-medium text-sm">Casualties ({generatedScenario.casualties.length})</span>
                     {expandedSections.has("casualties") ? (
@@ -520,37 +632,59 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
                     <div className="p-3 space-y-3 border-t border-border bg-muted/20">
                       {generatedScenario.casualties.map((casualty, idx) => (
                         <div key={idx} className="border border-border rounded bg-background p-3 space-y-2">
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="min-w-0 truncate text-xs font-semibold text-muted-foreground">{casualty.id}</span>
+                          <div className="flex items-center justify-between">
+                            <input
+                              type="text"
+                              value={casualty.name}
+                              onChange={(e) => updateCasualty(idx, "name", e.target.value)}
+                              placeholder="Casualty name"
+                              className="flex-1 px-2 py-1 text-xs font-semibold rounded bg-input border border-border focus:outline-none focus:ring-1 focus:ring-primary"
+                            />
                             <Button
-                              size="icon-sm"
+                              size="sm"
                               variant="ghost"
                               onClick={() => removeCasualty(idx)}
-                              className="shrink-0 hover:bg-destructive/10 hover:text-destructive"
+                              className="h-6 w-6 p-0 ml-2 hover:bg-destructive/10 hover:text-destructive"
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-3 w-3" />
                             </Button>
                           </div>
-                          <input
-                            type="text"
-                            value={casualty.injury_type}
-                            onChange={(e) => updateCasualty(idx, "injury_type", e.target.value)}
-                            placeholder="Injury type"
-                            className="w-full px-2 py-1 text-xs rounded bg-input border border-border focus:outline-none focus:ring-1 focus:ring-primary"
-                          />
-                          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                          <div className="space-y-2">
+                            <label className="text-xs font-medium text-muted-foreground">Injuries</label>
+                            {casualty.injuries.map((injury, injIdx) => (
+                              <div key={injIdx} className="flex items-center gap-2">
+                                <input
+                                  type="text"
+                                  value={injury}
+                                  onChange={(e) => updateInjury(idx, injIdx, e.target.value)}
+                                  className="flex-1 px-2 py-1 text-xs rounded bg-input border border-border focus:outline-none focus:ring-1 focus:ring-primary"
+                                />
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => removeInjuryFromCasualty(idx, injIdx)}
+                                  className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            ))}
+                            <Button
+                              onClick={() => addInjuryToCasualty(idx)}
+                              size="sm"
+                              variant="outline"
+                              className="w-full text-xs h-7"
+                            >
+                              <Plus className="h-3 w-3 mr-1" /> Add Injury
+                            </Button>
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium text-muted-foreground">Status</label>
                             <input
                               type="text"
-                              value={casualty.severity}
-                              onChange={(e) => updateCasualty(idx, "severity", e.target.value)}
-                              placeholder="Severity"
-                              className="w-full px-2 py-1 text-xs rounded bg-input border border-border focus:outline-none focus:ring-1 focus:ring-primary"
-                            />
-                            <input
-                              type="text"
-                              value={casualty.location}
-                              onChange={(e) => updateCasualty(idx, "location", e.target.value)}
-                              placeholder="Location"
+                              value={casualty.status}
+                              onChange={(e) => updateCasualty(idx, "status", e.target.value)}
+                              placeholder="Status"
                               className="w-full px-2 py-1 text-xs rounded bg-input border border-border focus:outline-none focus:ring-1 focus:ring-primary"
                             />
                           </div>
@@ -563,11 +697,10 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
                   )}
                 </div>
 
-                {/* Injects Section */}
                 <div className="border border-border rounded-md">
                   <button
                     onClick={() => toggleSection("injects")}
-                    className="flex min-h-11 w-full items-center justify-between gap-2 p-3 text-left transition-colors hover:bg-muted/50"
+                    className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
                   >
                     <span className="font-medium text-sm">Injects ({generatedScenario.injects.length})</span>
                     {expandedSections.has("injects") ? (
@@ -580,35 +713,29 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
                     <div className="p-3 space-y-3 border-t border-border bg-muted/20">
                       {generatedScenario.injects.map((inject, idx) => (
                         <div key={idx} className="border border-border rounded bg-background p-3 space-y-2">
-                          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                            <input
-                              type="number"
-                              value={inject.time}
-                              onChange={(e) => updateInject(idx, "time", Number.parseInt(e.target.value))}
-                              placeholder="Time (s)"
-                              className="min-h-9 w-full rounded border border-border bg-input px-2 py-2 text-xs sm:w-24"
-                            />
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-semibold text-muted-foreground">Inject {idx + 1}</span>
                             <Button
-                              size="icon-sm"
+                              size="sm"
                               variant="ghost"
                               onClick={() => removeInject(idx)}
-                              className="shrink-0 self-end sm:self-auto hover:bg-destructive/10 hover:text-destructive"
+                              className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive"
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-3 w-3" />
                             </Button>
                           </div>
                           <input
                             type="text"
-                            value={inject.event}
-                            onChange={(e) => updateInject(idx, "event", e.target.value)}
-                            placeholder="Event"
+                            value={inject.type}
+                            onChange={(e) => updateInject(idx, "type", e.target.value)}
+                            placeholder="Event type"
                             className="w-full px-2 py-1 text-xs rounded bg-input border border-border focus:outline-none focus:ring-1 focus:ring-primary"
                           />
                           <input
                             type="text"
-                            value={inject.description}
-                            onChange={(e) => updateInject(idx, "description", e.target.value)}
-                            placeholder="Description"
+                            value={inject.location}
+                            onChange={(e) => updateInject(idx, "location", e.target.value)}
+                            placeholder="Location"
                             className="w-full px-2 py-1 text-xs rounded bg-input border border-border focus:outline-none focus:ring-1 focus:ring-primary"
                           />
                         </div>
@@ -620,11 +747,10 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
                   )}
                 </div>
 
-                {/* Objectives Section */}
                 <div className="border border-border rounded-md">
                   <button
                     onClick={() => toggleSection("objectives")}
-                    className="flex min-h-11 w-full items-center justify-between gap-2 p-3 text-left transition-colors hover:bg-muted/50"
+                    className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
                   >
                     <span className="font-medium text-sm">Objectives ({generatedScenario.objectives.length})</span>
                     {expandedSections.has("objectives") ? (
@@ -636,35 +762,44 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
                   {expandedSections.has("objectives") && (
                     <div className="p-3 space-y-2 border-t border-border bg-muted/20">
                       {generatedScenario.objectives.map((obj, idx) => (
-                        <div key={idx} className="flex items-center gap-2">
+                        <div key={idx} className="border border-border rounded bg-background p-2 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <input
+                              type="text"
+                              value={obj.type}
+                              onChange={(e) => updateObjective(idx, "type", e.target.value)}
+                              placeholder="Type"
+                              className="w-24 px-2 py-1 text-xs rounded bg-input border border-border focus:outline-none focus:ring-1 focus:ring-primary"
+                            />
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => removeObjective(idx)}
+                              className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
                           <input
                             type="text"
-                            value={obj}
-                            onChange={(e) => updateArrayItem("objectives", idx, e.target.value)}
-                            className="flex-1 px-2 py-1 text-xs rounded bg-background border border-border focus:outline-none focus:ring-1 focus:ring-primary"
+                            value={obj.description}
+                            onChange={(e) => updateObjective(idx, "description", e.target.value)}
+                            placeholder="Description"
+                            className="w-full px-2 py-1 text-xs rounded bg-input border border-border focus:outline-none focus:ring-1 focus:ring-primary"
                           />
-                          <Button
-                            size="icon-sm"
-                            variant="ghost"
-                            onClick={() => removeArrayItem("objectives", idx)}
-                            className="shrink-0 hover:bg-destructive/10 hover:text-destructive"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
                         </div>
                       ))}
-                      <Button onClick={() => addArrayItem("objectives")} size="sm" variant="outline" className="w-full">
+                      <Button onClick={addObjective} size="sm" variant="outline" className="w-full bg-transparent">
                         <Plus className="h-3 w-3 mr-1" /> Add Objective
                       </Button>
                     </div>
                   )}
                 </div>
 
-                {/* Expected Actions Section */}
                 <div className="border border-border rounded-md">
                   <button
                     onClick={() => toggleSection("actions")}
-                    className="flex min-h-11 w-full items-center justify-between gap-2 p-3 text-left transition-colors hover:bg-muted/50"
+                    className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
                   >
                     <span className="font-medium text-sm">
                       Expected Actions ({generatedScenario.expected_actions.length})
@@ -678,40 +813,45 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
                   {expandedSections.has("actions") && (
                     <div className="p-3 space-y-2 border-t border-border bg-muted/20">
                       {generatedScenario.expected_actions.map((action, idx) => (
-                        <div key={idx} className="flex items-center gap-2">
+                        <div key={idx} className="border border-border rounded bg-background p-2 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-semibold text-muted-foreground">Action {idx + 1}</span>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => removeExpectedAction(idx)}
+                              className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
                           <input
                             type="text"
-                            value={action}
-                            onChange={(e) => updateArrayItem("expected_actions", idx, e.target.value)}
-                            className="flex-1 px-2 py-1 text-xs rounded bg-background border border-border focus:outline-none focus:ring-1 focus:ring-primary"
+                            value={action.action}
+                            onChange={(e) => updateExpectedAction(idx, "action", e.target.value)}
+                            placeholder="Action"
+                            className="w-full px-2 py-1 text-xs rounded bg-input border border-border focus:outline-none focus:ring-1 focus:ring-primary"
                           />
-                          <Button
-                            size="icon-sm"
-                            variant="ghost"
-                            onClick={() => removeArrayItem("expected_actions", idx)}
-                            className="shrink-0 hover:bg-destructive/10 hover:text-destructive"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
+                          <input
+                            type="text"
+                            value={action.justification}
+                            onChange={(e) => updateExpectedAction(idx, "justification", e.target.value)}
+                            placeholder="Justification (e.g., TCCC Guidelines reference)"
+                            className="w-full px-2 py-1 text-xs rounded bg-input border border-border focus:outline-none focus:ring-1 focus:ring-primary"
+                          />
                         </div>
                       ))}
-                      <Button
-                        onClick={() => addArrayItem("expected_actions")}
-                        size="sm"
-                        variant="outline"
-                        className="w-full"
-                      >
+                      <Button onClick={addExpectedAction} size="sm" variant="outline" className="w-full bg-transparent">
                         <Plus className="h-3 w-3 mr-1" /> Add Action
                       </Button>
                     </div>
                   )}
                 </div>
 
-                {/* Evaluation Metrics Section */}
                 <div className="border border-border rounded-md">
                   <button
                     onClick={() => toggleSection("metrics")}
-                    className="flex min-h-11 w-full items-center justify-between gap-2 p-3 text-left transition-colors hover:bg-muted/50"
+                    className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
                   >
                     <span className="font-medium text-sm">
                       Evaluation Metrics ({generatedScenario.evaluation_metrics.length})
@@ -725,34 +865,71 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
                   {expandedSections.has("metrics") && (
                     <div className="p-3 space-y-2 border-t border-border bg-muted/20">
                       {generatedScenario.evaluation_metrics.map((metric, idx) => (
-                        <div key={idx} className="flex items-center gap-2">
+                        <div key={idx} className="border border-border rounded bg-background p-2 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-semibold text-muted-foreground">Metric {idx + 1}</span>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => removeEvaluationMetric(idx)}
+                              className="h-6 w-6 p-0 hover:bg-destructive/10 hover:text-destructive"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
                           <input
                             type="text"
-                            value={metric}
-                            onChange={(e) => updateArrayItem("evaluation_metrics", idx, e.target.value)}
-                            className="flex-1 px-2 py-1 text-xs rounded bg-background border border-border focus:outline-none focus:ring-1 focus:ring-primary"
+                            value={metric.metric}
+                            onChange={(e) => updateEvaluationMetric(idx, "metric", e.target.value)}
+                            placeholder="Metric name"
+                            className="w-full px-2 py-1 text-xs rounded bg-input border border-border focus:outline-none focus:ring-1 focus:ring-primary"
                           />
-                          <Button
-                            size="icon-sm"
-                            variant="ghost"
-                            onClick={() => removeArrayItem("evaluation_metrics", idx)}
-                            className="shrink-0 hover:bg-destructive/10 hover:text-destructive"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </Button>
+                          <input
+                            type="text"
+                            value={metric.target}
+                            onChange={(e) => updateEvaluationMetric(idx, "target", e.target.value)}
+                            placeholder="Target (e.g., Less than 2 minutes)"
+                            className="w-full px-2 py-1 text-xs rounded bg-input border border-border focus:outline-none focus:ring-1 focus:ring-primary"
+                          />
                         </div>
                       ))}
                       <Button
-                        onClick={() => addArrayItem("evaluation_metrics")}
+                        onClick={addEvaluationMetric}
                         size="sm"
                         variant="outline"
-                        className="w-full"
+                        className="w-full bg-transparent"
                       >
                         <Plus className="h-3 w-3 mr-1" /> Add Metric
                       </Button>
                     </div>
                   )}
                 </div>
+
+                {generatedScenario.rationale && (
+                  <div className="border border-border rounded-md">
+                    <button
+                      onClick={() => toggleSection("rationale")}
+                      className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
+                    >
+                      <span className="font-medium text-sm">Rationale</span>
+                      {expandedSections.has("rationale") ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
+                    </button>
+                    {expandedSections.has("rationale") && (
+                      <div className="p-3 border-t border-border bg-muted/20">
+                        <textarea
+                          value={generatedScenario.rationale}
+                          onChange={(e) => updateScenarioField("rationale", e.target.value)}
+                          rows={4}
+                          className="w-full px-3 py-2 text-sm rounded bg-background border border-border focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 <Button
                   onClick={handleSavePublish}
@@ -767,6 +944,5 @@ export function AdminCreateCourse({ onPublish }: AdminCreateCourseProps) {
         </div>
       </div>
     </div>
-  )
   )
 }
