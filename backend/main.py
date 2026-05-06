@@ -5,6 +5,7 @@ from routes.scenario_routes import router as scenario_router
 from routes.assignment_routes import router as assignment_router
 from routes.auth_routes import router as auth_router
 from supabase import create_client
+from routes.aar_routes import router as aar_router
 
 
 app = FastAPI()
@@ -20,6 +21,8 @@ app.add_middleware(
 )
 
 
+
+app.include_router(aar_router)
 app.include_router(scenario_router)
 app.include_router(assignment_router)
 app.include_router(auth_router)
