@@ -23,9 +23,72 @@ def save_aar_result(req):
     return response.data
 
 def get_aar_results():
-    response = supabase.table("aar_results") \
+    # 1. Get AAR results
+    aar_response = supabase.table("aar_results") \
         .select("*") \
         .order("created_at", desc=True) \
         .execute()
 
-    return response.data
+    aar_rows = aar_response.data or []
+
+    if not aar_rows:
+        return []
+
+    # 2. Collect unique trainee and scenario IDs
+    trainee_ids = list({
+        row.get("trainee_id")
+        for row in aar_rows
+        if row.get("trainee_id")
+    })
+
+    scenario_ids = list({
+        row.get("scenario_id")
+        for row in aar_rows
+        if row.get("scenario_id")
+    })
+
+    # 3. Fetch trainee names
+    users = []
+    if trainee_ids:
+        users_response = supabase.table("users") \
+            .select("user_id,name") \
+            .in_("user_id", trainee_ids) \
+            .execute()
+
+        users = users_response.data or []
+
+    # 4. Fetch scenario/course names
+    scenarios = []
+    if scenario_ids:
+        scenarios_response = supabase.table("scenarios") \
+            .select("scenario_id,course_name") \
+            .in_("scenario_id", scenario_ids) \
+            .execute()
+
+        scenarios = scenarios_response.data or []
+
+    # 5. Create lookup dictionaries
+    user_by_id = {
+        user["user_id"]: user
+        for user in users
+    }
+
+    scenario_by_id = {
+        scenario["scenario_id"]: scenario
+        for scenario in scenarios
+    }
+
+    # 6. Add readable fields to each AAR row
+    enriched_results = []
+
+    for row in aar_rows:
+        trainee = user_by_id.get(row.get("trainee_id"))
+        scenario = scenario_by_id.get(row.get("scenario_id"))
+
+        enriched_results.append({
+            **row,
+            "trainee_name": trainee["name"] if trainee else row.get("trainee_id"),
+            "course_name": scenario["course_name"] if scenario else row.get("scenario_id"),
+        })
+
+    return enriched_results

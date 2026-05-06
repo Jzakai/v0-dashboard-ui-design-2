@@ -14,15 +14,19 @@ export type AssignmentRow = {
   scenario_id: string;
   assigned_at: string;
   status: AssignmentStatus;
-  /** ISO `YYYY-MM-DD` from Supabase `date` */
   start_date?: string | null;
-  /** ISO `YYYY-MM-DD` from Supabase `date` */
   due_date?: string | null;
+  launch_code?: string | null;
 };
 export type TraineeAssignmentItem = {
   assignment: AssignmentRow;
   scenario: Scenario;
 };
+
+function generateLaunchCode() {
+  const number = Math.floor(1000 + Math.random() * 9000);
+  return `TAC-${number}`;
+}
 
 export async function listScenarios(): Promise<Scenario[]> {
   const supabase = getSupabaseClient();
@@ -78,19 +82,19 @@ export async function createAssignments(params: {
   const due = params.dueDate?.trim() ? params.dueDate.trim() : null;
 
   const rows = params.traineeIds.map((traineeId) => ({
-    trainee_id: traineeId,
-    scenario_id: params.scenarioId,
-    assigned_at: now,
-    status: params.status ?? 'Not Started',
-    start_date: start,
-    due_date: due,
-  }));
+  trainee_id: traineeId,
+  scenario_id: params.scenarioId,
+  assigned_at: now,
+  status: params.status ?? 'Not Started',
+  start_date: start,
+  due_date: due,
+  launch_code: generateLaunchCode(),
+}));
 
   const { data, error } = await supabase
     .from(TABLE_ASSIGNMENTS)
     .insert(rows)
-    .select('assignment_id,trainee_id,scenario_id,assigned_at,status,start_date,due_date');
-  if (error) throw error;
+    .select('assignment_id,trainee_id,scenario_id,assigned_at,status,start_date,due_date,launch_code');  if (error) throw error;
   return (data ?? []) as AssignmentRow[];
 }
 
@@ -99,8 +103,7 @@ export async function listAssignmentsForTrainee(traineeId: string): Promise<Trai
 
   const { data: assignmentRows, error } = await supabase
     .from(TABLE_ASSIGNMENTS)
-    .select('assignment_id,trainee_id,scenario_id,assigned_at,status,start_date,due_date')
-    .eq('trainee_id', traineeId)
+    .select('assignment_id,trainee_id,scenario_id,assigned_at,status,start_date,due_date,launch_code')    .eq('trainee_id', traineeId)
     .order('assigned_at', { ascending: false });
 
   if (error) throw error;

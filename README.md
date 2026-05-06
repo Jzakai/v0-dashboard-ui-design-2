@@ -23,7 +23,7 @@ pip install -r requirements.txt
 7. navigate to backend folder from the terminal to run the fastAPI
 ```bash
 cd backend
-uvicorn main:app --reload --reload-dir . --port 8000
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload --reload-dir .
 ```
 8. keep the previous terminal and open a new terminal in the VS code to run the frontend via the following command
 ```bash

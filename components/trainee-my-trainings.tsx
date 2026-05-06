@@ -170,6 +170,12 @@ export function TraineeMyTrainings() {
                         <h3 className="text-lg font-semibold text-foreground">{item.scenario.course_name}</h3>
                         <p className="mt-1 text-sm text-muted-foreground">Assigned {formatDate(item.assignment.assigned_at)}</p>
                       </div>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Launch Code:{" "}
+                        <span className="font-mono font-semibold text-foreground">
+                          {item.assignment.launch_code ?? "Not generated"}
+                        </span>
+                      </p>
                       <div className={`shrink-0 self-start rounded-full px-3 py-1 text-xs font-medium ${badgeClass}`}>{status}</div>
                     </div>
 

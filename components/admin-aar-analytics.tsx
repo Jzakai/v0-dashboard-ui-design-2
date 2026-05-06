@@ -8,6 +8,10 @@ type AARResult = {
   assignment_id?: string | null;
   scenario_id?: string | null;
   trainee_id?: string | null;
+
+  trainee_name?: string | null;
+  course_name?: string | null;
+
   final_score: number;
   sequence_accuracy: number;
   speed_score: number;
@@ -244,11 +248,11 @@ export function AdminAARAnalytics() {
                     filteredResults.map((result) => (
                       <tr key={result.id} className="border-b border-border hover:bg-muted/50">
                         <td className="py-3 px-4 text-foreground">
-                          {result.trainee_id || 'Unknown trainee'}
+                          {result.trainee_name || result.trainee_id || 'Unknown trainee'}
                         </td>
 
                         <td className="py-3 px-4 text-foreground">
-                          {result.scenario_id || 'Unknown scenario'}
+                          {result.course_name || result.scenario_id || 'Unknown scenario'}
                         </td>
 
                         <td className="py-3 px-4 text-foreground font-medium">
