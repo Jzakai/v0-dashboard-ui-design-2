@@ -3,8 +3,8 @@ from supabase import create_client
 supabaseUrl = 'https://xbqubafoxtqfvnvgsaod.supabase.co'
 supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhicXViYWZveHRxZnZudmdzYW9kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ5MjcwNDUsImV4cCI6MjA4MDUwMzA0NX0.0gODUNUIonqOmGoc6GoSlPchvxoDSbDr0c0p1Xcssds"
 supabase = create_client(supabaseUrl, supabaseKey)
-
 def save_aar_result(req):
+    # 1. Save AAR performance result
     response = supabase.table("aar_results").insert({
         "assignment_id": req.assignment_id,
         "scenario_id": req.scenario_id,
@@ -19,6 +19,15 @@ def save_aar_result(req):
         "action_timestamps": req.action_timestamps,
         "expected_actions": req.expected_actions,
     }).execute()
+
+    # 2. Mark assignment as completed
+    if req.assignment_id:
+        update_response = supabase.table("assignments") \
+            .update({"status": "Completed"}) \
+            .eq("assignment_id", req.assignment_id) \
+            .execute()
+
+        print("Assignment updated to Completed:", update_response.data)
 
     return response.data
 
@@ -88,6 +97,51 @@ def get_aar_results():
         enriched_results.append({
             **row,
             "trainee_name": trainee["name"] if trainee else row.get("trainee_id"),
+            "course_name": scenario["course_name"] if scenario else row.get("scenario_id"),
+        })
+
+    return enriched_results
+
+
+def get_aar_results_for_trainee(trainee_id: str):
+    aar_response = supabase.table("aar_results") \
+        .select("*") \
+        .eq("trainee_id", trainee_id) \
+        .order("created_at", desc=True) \
+        .execute()
+
+    aar_rows = aar_response.data or []
+
+    if not aar_rows:
+        return []
+
+    scenario_ids = list({
+        row.get("scenario_id")
+        for row in aar_rows
+        if row.get("scenario_id")
+    })
+
+    scenarios = []
+    if scenario_ids:
+        scenarios_response = supabase.table("scenarios") \
+            .select("scenario_id,course_name") \
+            .in_("scenario_id", scenario_ids) \
+            .execute()
+
+        scenarios = scenarios_response.data or []
+
+    scenario_by_id = {
+        scenario["scenario_id"]: scenario
+        for scenario in scenarios
+    }
+
+    enriched_results = []
+
+    for row in aar_rows:
+        scenario = scenario_by_id.get(row.get("scenario_id"))
+
+        enriched_results.append({
+            **row,
             "course_name": scenario["course_name"] if scenario else row.get("scenario_id"),
         })
 

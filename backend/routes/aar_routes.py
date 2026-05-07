@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
 from typing import List, Optional, Any
-from repositories.aar_repo import save_aar_result
+from repositories.aar_repo import get_aar_results_for_trainee, save_aar_result
 from repositories.aar_repo import save_aar_result, get_aar_results
 
 router = APIRouter(prefix="/aar", tags=["AAR"])
@@ -33,4 +33,9 @@ def save_result(req: AARResultRequest):
 @router.get("/results")
 def results():
     data = get_aar_results()
+    return {"results": data}
+
+@router.get("/results/trainee/{trainee_id}")
+def trainee_results(trainee_id: str):
+    data = get_aar_results_for_trainee(trainee_id)
     return {"results": data}
