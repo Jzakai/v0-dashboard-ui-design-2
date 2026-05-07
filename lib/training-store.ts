@@ -98,40 +98,81 @@ export async function createAssignments(params: {
   return (data ?? []) as AssignmentRow[];
 }
 
+function scenarioForAssignmentRow(
+  row: AssignmentRow,
+  scenarioById: Map<string, Scenario>,
+): Scenario {
+  const sid =
+    row.scenario_id != null && String(row.scenario_id).trim() !== ''
+      ? String(row.scenario_id).trim()
+      : '';
+  if (!sid) {
+    return {
+      scenario_id: '(none)',
+      course_name: '[Missing scenario_id on assignment row]',
+    };
+  }
+  const found = scenarioById.get(sid);
+  if (found) {
+    const name =
+      typeof found.course_name === 'string' && found.course_name.trim()
+        ? found.course_name.trim()
+        : 'Unnamed Course';
+    return { scenario_id: found.scenario_id, course_name: name };
+  }
+  return {
+    scenario_id: sid,
+    course_name: `[Missing scenario] id: ${sid}`,
+  };
+}
+
 export async function listAssignmentsForTrainee(traineeId: string): Promise<TraineeAssignmentItem[]> {
   const supabase = getSupabaseClient();
+  const idForQuery = String(traineeId).trim();
 
-  const { data: assignmentRows, error } = await supabase
+  console.log('Fetching for ID:', idForQuery);
+
+  const { data, error } = await supabase
     .from(TABLE_ASSIGNMENTS)
-    .select('assignment_id,trainee_id,scenario_id,assigned_at,status,start_date,due_date,launch_code')    .eq('trainee_id', traineeId)
+    .select('assignment_id,trainee_id,scenario_id,assigned_at,status,start_date,due_date,launch_code')
+    .eq('trainee_id', idForQuery)
     .order('assigned_at', { ascending: false });
 
-  if (error) throw error;
+  console.log('Raw Data from Supabase:', data);
 
-  const rows = (assignmentRows ?? []) as AssignmentRow[];
-  const scenarioIds = Array.from(new Set(rows.map((r) => r.scenario_id)));
-  if (!scenarioIds.length) return [];
+  if (error) {
+    console.error('[listAssignmentsForTrainee] assignments query error:', error);
+    throw error;
+  }
 
-  const { data: scenarios, error: scenarioError } = await supabase
-    .from(TABLE_SCENARIOS)
-    .select('scenario_id,course_name')
-    .in('scenario_id', scenarioIds);
-  if (scenarioError) throw scenarioError;
+  const rows = (data ?? []) as AssignmentRow[];
+  if (!rows.length) return [];
 
-  const scenarioRows = (scenarios ?? []) as Scenario[];
-  const scenarioById = new Map<string, Scenario>(
-    scenarioRows.map((s) => [s.scenario_id, s])
-  );
+  const scenarioIds = Array.from(new Set(rows.map((r) => r.scenario_id).filter(Boolean)));
 
-  return rows
-    .map((r) => {
-      const scenario = scenarioById.get(r.scenario_id);
-      if (!scenario) return null;
-      return {
-        assignment: r,
-        scenario,
-      } as TraineeAssignmentItem;
-    })
-    .filter((x): x is TraineeAssignmentItem => Boolean(x));
+  let scenarioById = new Map<string, Scenario>();
+  if (scenarioIds.length > 0) {
+    const { data: scenarioData, error: scenarioError } = await supabase
+      .from(TABLE_SCENARIOS)
+      .select('scenario_id,course_name')
+      .in('scenario_id', scenarioIds);
+
+    if (scenarioError) {
+      console.error('[listAssignmentsForTrainee] scenarios query error:', scenarioError);
+      throw scenarioError;
+    }
+
+    console.log('Raw scenarios from Supabase:', scenarioData);
+
+    const scenarioRows = (scenarioData ?? []) as Scenario[];
+    scenarioById = new Map<string, Scenario>(
+      scenarioRows.map((s) => [s.scenario_id, s]),
+    );
+  }
+
+  return rows.map((r) => ({
+    assignment: r,
+    scenario: scenarioForAssignmentRow(r, scenarioById),
+  }));
 }
 

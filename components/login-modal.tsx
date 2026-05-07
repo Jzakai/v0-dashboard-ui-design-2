@@ -4,6 +4,7 @@ import type React from "react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { getSupabaseClient } from "@/lib/supabase/client"
+import { clearStoredTraineeId, setStoredTraineeId } from "@/lib/trainee-session"
 
 interface LoginModalProps {
   onLogin: (role: "admin" | "trainee", name: string) => void
@@ -80,16 +81,26 @@ export function LoginModal({ onLogin }: LoginModalProps) {
         return
       }
 
-      const { error: insertError } = await supabase.from("users").insert({
-        name: name.trim(),
-        email: normalizedEmail,
-        password_hash: passwordHash,
-        role: assignedRole,
-      })
+      const { data: created, error: insertError } = await supabase
+        .from("users")
+        .insert({
+          name: name.trim(),
+          email: normalizedEmail,
+          password_hash: passwordHash,
+          role: assignedRole,
+        })
+        .select("user_id")
+        .single()
 
       if (insertError) {
         console.error("Insert error:", insertError)
         throw insertError
+      }
+
+      if (assignedRole === "trainee" && created?.user_id) {
+        setStoredTraineeId(String(created.user_id))
+      } else {
+        clearStoredTraineeId()
       }
 
       onLogin(assignedRole, name.trim())
@@ -119,7 +130,7 @@ export function LoginModal({ onLogin }: LoginModalProps) {
 
       const { data, error: loginError } = await supabase
         .from("users")
-        .select("name, role")
+        .select("name, role, user_id")
         .eq("email", normalizedEmail)
         .eq("password_hash", passwordHash)
         .limit(1)
@@ -136,6 +147,12 @@ export function LoginModal({ onLogin }: LoginModalProps) {
       if (user.role !== "admin" && user.role !== "trainee") {
         setError("Invalid user role")
         return
+      }
+
+      if (user.role === "trainee" && user.user_id) {
+        setStoredTraineeId(String(user.user_id))
+      } else {
+        clearStoredTraineeId()
       }
 
       onLogin(user.role, user.name)

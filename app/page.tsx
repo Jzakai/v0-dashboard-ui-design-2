@@ -12,6 +12,7 @@ import { AdminAARAnalytics } from "@/components/admin-aar-analytics"
 import { ScenarioVisualization } from "@/components/scenario-visualization"
 import { TraineeMyTrainings } from "@/components/trainee-my-trainings"
 import { TraineeMyResults } from "@/components/trainee-my-results"
+import { clearStoredTraineeId } from "@/lib/trainee-session"
 
 type PageType =
   | "dashboard"
@@ -37,6 +38,7 @@ export default function Home() {
   }
 
   const handleLogout = () => {
+    clearStoredTraineeId()
     setIsLoggedIn(false)
     setCurrentPage("dashboard")
   }

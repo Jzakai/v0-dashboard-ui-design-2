@@ -1,11 +1,13 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { flushSync } from "react-dom"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { listAssignmentsForTrainee, listUsers, type TraineeAssignmentItem, type User } from "@/lib/training-store"
+import { listAssignmentsForTrainee, type TraineeAssignmentItem } from "@/lib/training-store"
+import { getStoredTraineeId } from "@/lib/trainee-session"
 
 function formatDate(iso: string) {
   const d = new Date(iso)
@@ -13,64 +15,70 @@ function formatDate(iso: string) {
   return d.toLocaleDateString()
 }
 
-export function TraineeMyTrainings() {
-  const [trainees, setTrainees] = useState<User[]>([])
-  const [selectedTraineeId, setSelectedTraineeId] = useState<string>("")
+function statusBadgeClass(status: string) {
+  if (status === "Not Started") return "bg-muted text-muted-foreground"
+  if (status === "In Progress") return "bg-accent/20 text-accent"
+  if (status === "Completed") return "bg-primary/20 text-primary"
+  return "bg-muted text-muted-foreground"
+}
 
+export function TraineeMyTrainings() {
   const [items, setItems] = useState<TraineeAssignmentItem[]>([])
-  const [isLoadingUsers, setIsLoadingUsers] = useState(true)
-  const [isLoadingAssignments, setIsLoadingAssignments] = useState(false)
+  const [isLoadingAssignments, setIsLoadingAssignments] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [sessionReady, setSessionReady] = useState(false)
+  const [traineeId, setTraineeId] = useState<string | null>(null)
 
   const [launchingAssignmentId, setLaunchingAssignmentId] = useState<string | null>(null)
   const [detailsOpen, setDetailsOpen] = useState(false)
   const [detailsItem, setDetailsItem] = useState<TraineeAssignmentItem | null>(null)
 
-  const selectedTrainee = useMemo(
-    () => trainees.find((t) => t.user_id === selectedTraineeId) ?? null,
-    [selectedTraineeId, trainees],
-  )
-
-  const loadUsers = async () => {
-    setIsLoadingUsers(true)
-    setLoadError(null)
-    try {
-      const users = await listUsers()
-      setTrainees(users)
-      setSelectedTraineeId((prev) => prev || users[0]?.user_id || "")
-    } catch (e) {
-      const message = e instanceof Error ? e.message : "Failed to load trainees."
-      setLoadError(message)
-    } finally {
-      setIsLoadingUsers(false)
-    }
-  }
-
-  const loadAssignments = async (traineeId: string) => {
-    if (!traineeId) return
-    setIsLoadingAssignments(true)
-    setLoadError(null)
-    try {
-      const rows = await listAssignmentsForTrainee(traineeId)
-      setItems(rows)
-    } catch (e) {
-      const message = e instanceof Error ? e.message : "Failed to load assignments."
-      setLoadError(message)
-    } finally {
-      setIsLoadingAssignments(false)
-    }
-  }
+  const mountedRef = useRef(true)
 
   useEffect(() => {
-    void loadUsers()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    mountedRef.current = true
+    return () => {
+      mountedRef.current = false
+    }
   }, [])
 
   useEffect(() => {
-    if (!selectedTraineeId) return
-    void loadAssignments(selectedTraineeId)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedTraineeId])
+    setTraineeId(getStoredTraineeId())
+    setSessionReady(true)
+  }, [])
+
+  const loadAssignments = useCallback(async (id: string) => {
+    setIsLoadingAssignments(true)
+    setLoadError(null)
+    try {
+      const rows = await listAssignmentsForTrainee(id)
+      if (!mountedRef.current) return
+      setItems(rows)
+    } catch (e) {
+      if (!mountedRef.current) return
+      const message = e instanceof Error ? e.message : "Failed to load assignments."
+      setLoadError(message)
+    } finally {
+      if (mountedRef.current) setIsLoadingAssignments(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!sessionReady) return
+    if (!traineeId) {
+      setItems([])
+      setLoadError(null)
+      setIsLoadingAssignments(false)
+      return
+    }
+    void loadAssignments(traineeId)
+  }, [sessionReady, traineeId, loadAssignments])
+
+  const retryLoad = () => {
+    const id = traineeId ?? getStoredTraineeId()
+    if (!id) return
+    void loadAssignments(id)
+  }
 
   const handleLaunchVR = (assignmentId: string, courseTitle: string) => {
     flushSync(() => setLaunchingAssignmentId(assignmentId))
@@ -96,55 +104,36 @@ export function TraineeMyTrainings() {
         <p className="text-muted-foreground">VR courses assigned to you via OpenXR</p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Choose trainee</CardTitle>
-          <CardDescription>Select the trainee record to view assigned trainings</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {loadError && (
-            <div className="flex flex-col gap-2 text-sm text-destructive sm:flex-row sm:flex-wrap sm:items-center">
-              <span className="min-w-0">{loadError}</span>
-              <button
-                type="button"
-                className="min-h-11 shrink-0 rounded-md px-3 text-sm font-medium text-primary underline-offset-4 hover:underline"
-                onClick={() => void loadUsers()}
-              >
-                Retry
-              </button>
-            </div>
-          )}
-          <select
-            value={selectedTraineeId}
-            onChange={(e) => setSelectedTraineeId(e.target.value)}
-            disabled={isLoadingUsers || isLoadingAssignments}
-            className="min-h-11 w-full rounded-md border border-border bg-input px-4 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+      {loadError && (
+        <div className="flex flex-col gap-2 rounded-lg border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive sm:flex-row sm:flex-wrap sm:items-center">
+          <span className="min-w-0 flex-1">{loadError}</span>
+          <button
+            type="button"
+            className="min-h-11 shrink-0 rounded-md px-3 text-sm font-medium text-primary underline-offset-4 hover:underline"
+            onClick={retryLoad}
           >
-            <option value="">{isLoadingUsers ? "Loading trainees…" : "Select trainee"}</option>
-            {trainees.map((t) => (
-              <option key={t.user_id} value={t.user_id}>
-                {t.name}
-              </option>
-            ))}
-          </select>
-
-          {selectedTrainee && (
-            <div className="text-xs text-muted-foreground">
-              Showing assignments for <span className="text-foreground font-medium">{selectedTrainee.name}</span>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            Retry
+          </button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-6">
-        {isLoadingAssignments ? (
+        {!sessionReady || isLoadingAssignments ? (
           <Card>
             <CardContent className="pt-6 text-sm text-muted-foreground">Loading assignments…</CardContent>
           </Card>
-        ) : !selectedTraineeId ? (
+        ) : !traineeId ? (
           <Card>
-            <CardContent className="pt-6 text-sm text-muted-foreground">
-              Select a trainee to view assigned trainings.
+            <CardHeader>
+              <CardTitle className="text-base">Sign in required</CardTitle>
+              <CardDescription>
+                Log in as a trainee from the home page so your account ID can be saved for this dashboard.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild className="min-h-11">
+                <Link href="/">Go to sign in</Link>
+              </Button>
             </CardContent>
           </Card>
         ) : items.length === 0 ? (
@@ -154,12 +143,7 @@ export function TraineeMyTrainings() {
         ) : (
           items.map((item) => {
             const status = item.assignment.status
-            const badgeClass =
-              status === "Not Started"
-                ? "bg-muted text-muted-foreground"
-                : status === "In Progress"
-                  ? "bg-accent/20 text-accent"
-                  : "bg-primary/20 text-primary"
+            const badgeClass = statusBadgeClass(status)
 
             return (
               <Card key={item.assignment.assignment_id} className="hover:shadow-lg transition-shadow">
@@ -297,5 +281,4 @@ export function TraineeMyTrainings() {
       </Card>
     </div>
   )
-  
 }
