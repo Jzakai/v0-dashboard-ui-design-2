@@ -15,29 +15,41 @@ def insert_assignment(trainee_id, scenario_id):
 
 
 def get_assignment_by_launch_code(launch_code: str):
+    clean_code = launch_code.strip().upper()
+
     assignment_response = supabase.table("assignments") \
         .select("*") \
-        .eq("launch_code", launch_code) \
-        .single() \
+        .eq("launch_code", clean_code) \
+        .limit(1) \
         .execute()
 
-    assignment = assignment_response.data
+    assignments = assignment_response.data or []
 
-    if not assignment:
-        return {"error": "Invalid launch code"}
+##exception handling for no assignment found with the launch code
+    if len(assignments) == 0:
+        return {
+            "error": "Invalid launch code",
+            "message": f"No assignment found for launch code: {clean_code}"
+        }
 
+    assignment = assignments[0]
     scenario_id = assignment["scenario_id"]
 
     scenario_response = supabase.table("scenarios") \
         .select("*") \
         .eq("scenario_id", scenario_id) \
-        .single() \
+        .limit(1) \
         .execute()
 
-    scenario = scenario_response.data
+    scenarios = scenario_response.data or []
 
-    if not scenario:
-        return {"error": "Scenario not found"}
+    if len(scenarios) == 0:
+        return {
+            "error": "Scenario not found",
+            "message": f"No scenario found for scenario_id: {scenario_id}"
+        }
+
+    scenario = scenarios[0]
 
     return {
         "assignment_id": assignment["assignment_id"],

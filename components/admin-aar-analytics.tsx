@@ -25,14 +25,11 @@ type AARResult = {
 export function AdminAARAnalytics() {
   const [selectedCourse, setSelectedCourse] = useState('');
   const [selectedTrainee, setSelectedTrainee] = useState('');
-  const [fromDate, setFromDate] = useState('');
-  const [toDate, setToDate] = useState('');
 
   const [results, setResults] = useState<AARResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Change this depending on your backend URL
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
 
   useEffect(() => {
@@ -57,30 +54,45 @@ export function AdminAARAnalytics() {
       }
     }
 
-    loadAARResults();
+    void loadAARResults();
   }, [API_BASE_URL]);
+
+  const courseOptions = useMemo(() => {
+    return Array.from(
+      new Set(
+        results
+          .map((r) => r.course_name || r.scenario_id)
+          .filter(Boolean)
+      )
+    ) as string[];
+  }, [results]);
+
+  const traineeOptions = useMemo(() => {
+    return Array.from(
+      new Set(
+        results
+          .map((r) => r.trainee_name || r.trainee_id)
+          .filter(Boolean)
+      )
+    ) as string[];
+  }, [results]);
 
   const filteredResults = useMemo(() => {
     return results.filter((result) => {
-      const resultDate = result.created_at ? result.created_at.slice(0, 10) : '';
+      const courseValue = result.course_name || result.scenario_id || '';
+      const traineeValue = result.trainee_name || result.trainee_id || '';
 
       const matchesCourse =
         !selectedCourse ||
-        result.scenario_id?.toLowerCase().includes(selectedCourse.toLowerCase());
+        courseValue.toLowerCase() === selectedCourse.toLowerCase();
 
       const matchesTrainee =
         !selectedTrainee ||
-        result.trainee_id?.toLowerCase().includes(selectedTrainee.toLowerCase());
+        traineeValue.toLowerCase() === selectedTrainee.toLowerCase();
 
-      const matchesFromDate =
-        !fromDate || resultDate >= fromDate;
-
-      const matchesToDate =
-        !toDate || resultDate <= toDate;
-
-      return matchesCourse && matchesTrainee && matchesFromDate && matchesToDate;
+      return matchesCourse && matchesTrainee;
     });
-  }, [results, selectedCourse, selectedTrainee, fromDate, toDate]);
+  }, [results, selectedCourse, selectedTrainee]);
 
   const averageScore =
     filteredResults.length > 0
@@ -107,13 +119,23 @@ export function AdminAARAnalytics() {
       : 0;
 
   function formatDuration(seconds: number) {
-    if (!seconds && seconds !== 0) return '--';
+    if (seconds === null || seconds === undefined) return '--';
 
     const mins = Math.floor(seconds / 60);
     const secs = Math.round(seconds % 60);
 
     if (mins === 0) return `${secs}s`;
     return `${mins}m ${secs}s`;
+  }
+
+  function formatDate(dateString: string) {
+    if (!dateString) return '--';
+
+    const date = new Date(dateString);
+
+    if (Number.isNaN(date.getTime())) return '--';
+
+    return date.toLocaleDateString();
   }
 
   return (
@@ -134,85 +156,77 @@ export function AdminAARAnalytics() {
 
         <CardContent className="space-y-6">
           {/* Filters */}
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Course / Scenario</label>
+              <label className="text-sm font-medium text-foreground">
+                Course / Scenario
+              </label>
               <select
                 value={selectedCourse}
                 onChange={(e) => setSelectedCourse(e.target.value)}
                 className="min-h-11 w-full rounded-md border border-border bg-input px-4 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="">All Scenarios</option>
-                <option value="hemorrhage">Hemorrhage Control</option>
-                <option value="chest">Chest Injury Response</option>
-                <option value="triage">Mass Casualty Triage</option>
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Trainee</label>
-              <select
-                value={selectedTrainee}
-                onChange={(e) => setSelectedTrainee(e.target.value)}
-                className="min-h-11 w-full rounded-md border border-border bg-input px-4 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-                <option value="">All Trainees</option>
-                {[...new Set(results.map((r) => r.trainee_id).filter(Boolean))].map((trainee) => (
-                  <option key={trainee as string} value={trainee as string}>
-                    {trainee}
+                {courseOptions.map((course) => (
+                  <option key={course} value={course}>
+                    {course}
                   </option>
                 ))}
               </select>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">From Date</label>
-              <input
-                type="date"
-                value={fromDate}
-                onChange={(e) => setFromDate(e.target.value)}
+              <label className="text-sm font-medium text-foreground">
+                Trainee
+              </label>
+              <select
+                value={selectedTrainee}
+                onChange={(e) => setSelectedTrainee(e.target.value)}
                 className="min-h-11 w-full rounded-md border border-border bg-input px-4 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">To Date</label>
-              <input
-                type="date"
-                value={toDate}
-                onChange={(e) => setToDate(e.target.value)}
-                className="min-h-11 w-full rounded-md border border-border bg-input px-4 py-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-              />
+              >
+                <option value="">All Trainees</option>
+                {traineeOptions.map((trainee) => (
+                  <option key={trainee} value={trainee}>
+                    {trainee}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
           {loading && (
-            <p className="text-sm text-muted-foreground">Loading Unity performance results...</p>
+            <p className="text-sm text-muted-foreground">
+              Loading Unity performance results...
+            </p>
           )}
 
-          {error && (
-            <p className="text-sm text-destructive">{error}</p>
-          )}
+          {error && <p className="text-sm text-destructive">{error}</p>}
 
           {/* KPI Cards */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div className="p-4 rounded-lg bg-muted">
-              <p className="text-sm text-muted-foreground mb-1">Average Score</p>
-              <div className="text-3xl font-bold text-foreground">{averageScore}%</div>
-              <p className="text-xs text-muted-foreground mt-1">
+            <div className="rounded-lg bg-muted p-4">
+              <p className="mb-1 text-sm text-muted-foreground">Average Score</p>
+              <div className="text-3xl font-bold text-foreground">
+                {averageScore}%
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
                 Based on {filteredResults.length} selected sessions
               </p>
             </div>
 
-            <div className="p-4 rounded-lg bg-muted">
-              <p className="text-sm text-muted-foreground mb-1">Average Completion Time</p>
+            <div className="rounded-lg bg-muted p-4">
+              <p className="mb-1 text-sm text-muted-foreground">
+                Average Completion Time
+              </p>
               <div className="text-3xl font-bold text-foreground">
                 {formatDuration(averageCompletionTime)}
               </div>
             </div>
 
-            <div className="p-4 rounded-lg bg-muted">
-              <p className="text-sm text-muted-foreground mb-1">Correct Action Sequence Rate</p>
+            <div className="rounded-lg bg-muted p-4">
+              <p className="mb-1 text-sm text-muted-foreground">
+                Correct Action Sequence Rate
+              </p>
               <div className="text-3xl font-bold text-foreground">
                 {averageSequenceAccuracy}%
               </div>
@@ -221,47 +235,73 @@ export function AdminAARAnalytics() {
 
           {/* Sessions Table */}
           <div>
-            <h3 className="text-sm font-semibold text-foreground mb-4">Sessions Detail</h3>
+            <h3 className="mb-4 text-sm font-semibold text-foreground">
+              Sessions Detail
+            </h3>
 
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="text-left py-3 px-4 font-medium text-foreground">Trainee</th>
-                    <th className="text-left py-3 px-4 font-medium text-foreground">Scenario</th>
-                    <th className="text-left py-3 px-4 font-medium text-foreground">Final Score</th>
-                    <th className="text-left py-3 px-4 font-medium text-foreground">Sequence Accuracy</th>
-                    <th className="text-left py-3 px-4 font-medium text-foreground">Speed Score</th>
-                    <th className="text-left py-3 px-4 font-medium text-foreground">Duration</th>
-                    <th className="text-left py-3 px-4 font-medium text-foreground">Date</th>
+                    <th className="px-4 py-3 text-left font-medium text-foreground">
+                      Trainee
+                    </th>
+                    <th className="px-4 py-3 text-left font-medium text-foreground">
+                      Scenario
+                    </th>
+                    <th className="px-4 py-3 text-left font-medium text-foreground">
+                      Final Score
+                    </th>
+                    <th className="px-4 py-3 text-left font-medium text-foreground">
+                      Sequence Accuracy
+                    </th>
+                    <th className="px-4 py-3 text-left font-medium text-foreground">
+                      Speed Score
+                    </th>
+                    <th className="px-4 py-3 text-left font-medium text-foreground">
+                      Duration
+                    </th>
+                    <th className="px-4 py-3 text-left font-medium text-foreground">
+                      Date
+                    </th>
                   </tr>
                 </thead>
 
                 <tbody>
                   {filteredResults.length === 0 && !loading ? (
                     <tr>
-                      <td colSpan={7} className="py-6 px-4 text-center text-muted-foreground">
+                      <td
+                        colSpan={7}
+                        className="px-4 py-6 text-center text-muted-foreground"
+                      >
                         No AAR results found.
                       </td>
                     </tr>
                   ) : (
                     filteredResults.map((result) => (
-                      <tr key={result.id} className="border-b border-border hover:bg-muted/50">
-                        <td className="py-3 px-4 text-foreground">
-                          {result.trainee_name || result.trainee_id || 'Unknown trainee'}
+                      <tr
+                        key={result.id}
+                        className="border-b border-border hover:bg-muted/50"
+                      >
+                        <td className="px-4 py-3 text-foreground">
+                          {result.trainee_name ||
+                            result.trainee_id ||
+                            'Unknown trainee'}
                         </td>
 
-                        <td className="py-3 px-4 text-foreground">
-                          {result.course_name || result.scenario_id || 'Unknown scenario'}
+                        <td className="px-4 py-3 text-foreground">
+                          {result.course_name ||
+                            result.scenario_id ||
+                            'Unknown scenario'}
                         </td>
 
-                        <td className="py-3 px-4 text-foreground font-medium">
+                        <td className="px-4 py-3 font-medium text-foreground">
                           {result.final_score}%
                         </td>
 
-                        <td className="py-3 px-4">
+                        <td className="px-4 py-3">
                           <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            className={`rounded-full px-2 py-1 text-xs font-medium ${
                               result.sequence_accuracy >= 70
                                 ? 'bg-primary/20 text-primary'
                                 : 'bg-destructive/20 text-destructive'
@@ -271,18 +311,16 @@ export function AdminAARAnalytics() {
                           </span>
                         </td>
 
-                        <td className="py-3 px-4 text-foreground">
+                        <td className="px-4 py-3 text-foreground">
                           {result.speed_score}%
                         </td>
 
-                        <td className="py-3 px-4 text-foreground">
+                        <td className="px-4 py-3 text-foreground">
                           {formatDuration(result.completion_time)}
                         </td>
 
-                        <td className="py-3 px-4 text-muted-foreground text-xs">
-                          {result.created_at
-                            ? new Date(result.created_at).toLocaleDateString()
-                            : '--'}
+                        <td className="px-4 py-3 text-xs text-muted-foreground">
+                          {formatDate(result.created_at)}
                         </td>
                       </tr>
                     ))

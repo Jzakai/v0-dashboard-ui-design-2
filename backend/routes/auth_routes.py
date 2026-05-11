@@ -22,7 +22,7 @@ class LoginRequest(BaseModel):
     email: EmailStr
     password: str
 
-
+##exception handling for user already exists, invalid email/password, and general exceptions during signup and login
 @router.post("/signup")
 async def signup(request: SignupRequest):
     try:

@@ -13,6 +13,10 @@ class AssignRequest(BaseModel):
 def assign_course(req: AssignRequest):
     return orchestrate_assignment(req)
 
+
+
+router = APIRouter(prefix="/assignment", tags=["Assignment"])
+
 @router.get("/vr_training_by_code/{launch_code}")
 def get_vr_training_by_code(launch_code: str):
     data = get_assignment_by_launch_code(launch_code)
